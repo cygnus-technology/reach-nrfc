@@ -1,0 +1,6 @@
+[submodule "reach-c-stack"]
+	path = reach-c-stack
+	url = ../reach-c-stack
+[submodule "reach-util"]
+	path = reach-util
+	url = ../reach-util

@@ -1,0 +1,16 @@
+# Build folders
+build/
+
+# Backup files
+*.md.backup
+
+# Python files
+__pycache__/
+dist/
+*.spec
+
+# PyCharm folders
+.idea/
+
+# VS Code folders
+.vscode/
