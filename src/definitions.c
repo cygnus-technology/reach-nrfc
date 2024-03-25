@@ -59,71 +59,94 @@ cr_ParameterInfo param_desc[NUM_PARAMS] = {
     {
         .id                = PARAM_USER_DEVICE_NAME,
         .name              = "User Device Name",
-        .data_type         = cr_ParameterDataType_STRING,
+        .which_desc        = cr_ParameterDataType_STRING + cr_ParameterInfo_uint32_desc_tag,
+        .desc.string_desc.has_default_value = true,
+        .desc.string_desc.default_value = "Test",
+        .desc.string_desc.has_max_size = true,
+        .desc.string_desc.max_size = 26,
         .access            = cr_AccessLevel_READ_WRITE,
         .storage_location  = cr_StorageLocation_NONVOLATILE,
         .has_description   = true,
-        .description       = "Up to 26 characters",
+        .description       = "Advertised BLE name",
     },
     {
         .id                = PARAM_TIMEZONE_ENABLED,
-        .name              = "Timezone Enabled",
-        .data_type         = cr_ParameterDataType_BOOL,
+        .name              = "Timezone Mode",
+        .which_desc        = cr_ParameterDataType_BOOL + cr_ParameterInfo_uint32_desc_tag,
         .access            = cr_AccessLevel_READ_WRITE,
         .storage_location  = cr_StorageLocation_NONVOLATILE,
-        .has_default_value = true,
-        .default_value     = 1,
+        .desc.bool_desc.has_default_value = true,
+        .desc.bool_desc.default_value     = true,
+        .desc.bool_desc.has_off_text = true,
+        .desc.bool_desc.off_text = "Non-timezoned",
+        .desc.bool_desc.has_on_text = true,
+        .desc.bool_desc.on_text = "Timezoned",
     },
     {
         .id                = PARAM_TIMEZONE_OFFSET,
         .name              = "Timezone Offset",
-        .data_type         = cr_ParameterDataType_INT32,
+        .which_desc         = cr_ParameterDataType_INT32 + cr_ParameterInfo_uint32_desc_tag,
         .access            = cr_AccessLevel_READ_WRITE,
         .storage_location  = cr_StorageLocation_NONVOLATILE,
         .has_description   = true,
         .description       = "The offset from UTC",
-        .units             = "seconds",
-        .has_range_min     = true,
-        .range_min         = -43200,
-        .has_default_value = true,
-        .default_value     = 0,
-        .has_range_max     = true,
-        .range_max         = 43200,
+        .desc.int32_desc.has_units = true,
+        .desc.int32_desc.units             = "seconds",
+        .desc.int32_desc.has_range_min     = true,
+        .desc.int32_desc.range_min         = -43200,
+        .desc.int32_desc.has_default_value = true,
+        .desc.int32_desc.default_value     = 0,
+        .desc.int32_desc.has_range_max     = true,
+        .desc.int32_desc.range_max         = 43200,
     },
     {
         .id                = PARAM_BT_DEVICE_ADDRESS,
         .name              = "BT Device Address",
-        .data_type         = cr_ParameterDataType_BYTE_ARRAY,
-        .size_in_bytes     = 6,
+        .which_desc         = cr_ParameterDataType_BYTE_ARRAY + cr_ParameterInfo_uint32_desc_tag,
+        .desc.bytearray_desc.has_max_size = true,
+        .desc.bytearray_desc.max_size     = 6,
         .access            = cr_AccessLevel_READ,
         .storage_location  = cr_StorageLocation_RAM,
     },
     {
         .id                = PARAM_UPTIME,
         .name              = "Uptime",
-        .data_type         = cr_ParameterDataType_INT64,
+        .which_desc         = cr_ParameterDataType_INT64 + cr_ParameterInfo_uint32_desc_tag,
         .access            = cr_AccessLevel_READ,
         .storage_location  = cr_StorageLocation_RAM,
-        .units             = "milliseconds",
+        .desc.int64_desc.has_units = true,
+        .desc.int64_desc.units             = "milliseconds",
     },
     {
         .id                = PARAM_BUTTON_PRESSED,
-        .name              = "Button Pressed",
-        .data_type         = cr_ParameterDataType_BOOL,
+        .name              = "Momentary Pushbutton",
+        .which_desc        = cr_ParameterDataType_BOOL + cr_ParameterInfo_uint32_desc_tag,
+        .desc.bool_desc.has_off_text = true,
+        .desc.bool_desc.off_text = "Not Pressed",
+        .desc.bool_desc.has_on_text = true,
+        .desc.bool_desc.on_text = "Pressed",
         .access            = cr_AccessLevel_READ,
         .storage_location  = cr_StorageLocation_RAM,
     },
     {
         .id                = PARAM_IDENTIFY_LED_ON,
-        .name              = "Identify LED On",
-        .data_type         = cr_ParameterDataType_BOOL,
+        .name              = "Identify LED",
+        .which_desc        = cr_ParameterDataType_BOOL + cr_ParameterInfo_uint32_desc_tag,
+        .desc.bool_desc.has_off_text = true,
+        .desc.bool_desc.off_text = "Off",
+        .desc.bool_desc.has_on_text = true,
+        .desc.bool_desc.on_text = "On",
         .access            = cr_AccessLevel_READ,
         .storage_location  = cr_StorageLocation_RAM,
     },
     {
         .id                = PARAM_RGB_LED_STATE,
         .name              = "RGB LED State",
-        .data_type         = cr_ParameterDataType_BIT_FIELD,
+        .which_desc        = cr_ParameterDataType_BIT_FIELD + cr_ParameterInfo_uint32_desc_tag,
+        .desc.bitfield_desc.has_bits_available = true,
+        .desc.bitfield_desc.bits_available = 3,
+        .desc.bitfield_desc.has_definition_id = true,
+        .desc.bitfield_desc.definition_id = 1,
         .access            = cr_AccessLevel_READ_WRITE,
         .storage_location  = cr_StorageLocation_RAM,
         .has_description   = true,
@@ -132,7 +155,9 @@ cr_ParameterInfo param_desc[NUM_PARAMS] = {
     {
         .id                = PARAM_RGB_LED_COLOR,
         .name              = "RGB LED Color",
-        .data_type         = cr_ParameterDataType_ENUMERATION,
+        .which_desc         = cr_ParameterDataType_ENUMERATION + cr_ParameterInfo_uint32_desc_tag,
+        .desc.enum_desc.has_definition_id = true,
+        .desc.enum_desc.definition_id = 0,
         .access            = cr_AccessLevel_READ_WRITE,
         .storage_location  = cr_StorageLocation_RAM,
         .has_description   = true,
@@ -141,36 +166,43 @@ cr_ParameterInfo param_desc[NUM_PARAMS] = {
     {
         .id                = PARAM_IDENTIFY,
         .name              = "Identify",
-        .data_type         = cr_ParameterDataType_BOOL,
+        .which_desc        = cr_ParameterDataType_BOOL + cr_ParameterInfo_uint32_desc_tag,
+        .desc.bool_desc.has_off_text = true,
+        .desc.bool_desc.off_text = "Not Identifying",
+        .desc.bool_desc.has_on_text = true,
+        .desc.bool_desc.on_text = "Identifying",
         .access            = cr_AccessLevel_READ_WRITE,
         .storage_location  = cr_StorageLocation_RAM,
         .has_description   = true,
-        .description       = "Turn on to blink the green LED",
+        .description       = "Blinks the green LED",
     },
     {
         .id                = PARAM_IDENTIFY_INTERVAL,
         .name              = "Identify Interval",
-        .data_type         = cr_ParameterDataType_FLOAT32,
+        .which_desc         = cr_ParameterDataType_FLOAT32 + cr_ParameterInfo_uint32_desc_tag,
         .access            = cr_AccessLevel_READ_WRITE,
         .storage_location  = cr_StorageLocation_NONVOLATILE,
         .has_description   = true,
         .description       = "Time between Identify blinks",
-        .units             = "seconds",
-        .has_range_min     = true,
-        .range_min         = 0.01,
-        .has_default_value = true,
-        .default_value     = 1,
-        .has_range_max     = true,
-        .range_max         = 60,
+        .desc.float32_desc.has_units = true,
+        .desc.float32_desc.units             = "seconds",
+        .desc.float32_desc.has_range_min     = true,
+        .desc.float32_desc.range_min         = 0.01,
+        .desc.float32_desc.has_default_value = true,
+        .desc.float32_desc.default_value     = 1,
+        .desc.float32_desc.has_range_max     = true,
+        .desc.float32_desc.range_max         = 60,
+        .desc.float32_desc.has_precision = true,
+        .desc.float32_desc.precision = 2,
     }
 };
 
 cr_ParamExInfoResponse param_ex_desc[NUM_EX_PARAMS] = {
     {
-        .associated_pid = PARAM_RGB_LED_COLOR,
+        .enum_bitfield_id = 0,
         .data_type = cr_ParameterDataType_ENUMERATION,
-        .enumerations_count = 8,
-        .enumerations = {
+        .enums_bits_count = 8,
+        .enums_bits = {
             {RGB_LED_COLOR_OFF,     "Off"},
             {RGB_LED_COLOR_RED,     "Red"},
             {RGB_LED_COLOR_GREEN,   "Green"},
@@ -182,13 +214,13 @@ cr_ParamExInfoResponse param_ex_desc[NUM_EX_PARAMS] = {
         }
     },
     {
-        .associated_pid = PARAM_RGB_LED_STATE,
+        .enum_bitfield_id = 1,
         .data_type = cr_ParameterDataType_BIT_FIELD,
-        .enumerations_count = 3,
-        .enumerations = {
-            {RGB_LED_STATE_BIT_RED,   "Red"},
-            {RGB_LED_STATE_BIT_GREEN, "Green"},
-            {RGB_LED_STATE_BIT_BLUE,  "Blue"}
+        .enums_bits_count = 3,
+        .enums_bits = {
+            {RGB_LED_STATE_BIT_INDEX_RED,   "Red"},
+            {RGB_LED_STATE_BIT_INDEX_GREEN, "Green"},
+            {RGB_LED_STATE_BIT_INDEX_BLUE,  "Blue"}
         }
     }
 };
@@ -265,64 +297,73 @@ void init_param_repo()
         sCr_param_val[i].parameter_id = param_desc[i].id;
 
         // the PID directly maps to the parameter type, just to make it easy.
-        switch (param_desc[i].data_type)
+        switch ((param_desc[i].which_desc - cr_ParameterInfo_uint32_desc_tag))
         {
         case cr_ParameterDataType_UINT32:
-            sCr_param_val[i].which_value = cr_ParameterValue_uint32_value_tag;
-            if (param_desc[i].has_default_value)
-                sCr_param_val[i].value.uint32_value = (uint32_t)param_desc[i].default_value;
+            if (param_desc[i].desc.uint32_desc.has_default_value)
+                sCr_param_val[i].value.uint32_value = param_desc[i].desc.uint32_desc.default_value;
             break;
         case cr_ParameterDataType_INT32:
-            sCr_param_val[i].which_value = cr_ParameterValue_sint32_value_tag;
-            if (param_desc[i].has_default_value)
-                sCr_param_val[i].value.sint32_value = (int32_t)param_desc[i].default_value;
+            if (param_desc[i].desc.int32_desc.has_default_value)
+                sCr_param_val[i].value.sint32_value = param_desc[i].desc.int32_desc.default_value;
             break;
         case cr_ParameterDataType_FLOAT32:
-            sCr_param_val[i].which_value = cr_ParameterValue_float32_value_tag;
-            if (param_desc[i].has_default_value)
-                sCr_param_val[i].value.float32_value = (float)param_desc[i].default_value;
+            if (param_desc[i].desc.float32_desc.has_default_value)
+                sCr_param_val[i].value.float32_value = param_desc[i].desc.float32_desc.default_value;
             break;
         case cr_ParameterDataType_UINT64:
-            sCr_param_val[i].which_value = cr_ParameterValue_uint64_value_tag;
-            if (param_desc[i].has_default_value)
-                sCr_param_val[i].value.uint64_value = (uint64_t)param_desc[i].default_value;
+            if (param_desc[i].desc.uint64_desc.has_default_value)
+                sCr_param_val[i].value.uint64_value = param_desc[i].desc.uint64_desc.default_value;
             break;
         case cr_ParameterDataType_INT64:
-            sCr_param_val[i].which_value = cr_ParameterValue_sint64_value_tag;
-            if (param_desc[i].has_default_value)
-                sCr_param_val[i].value.sint64_value = (int64_t)param_desc[i].default_value;
+            if (param_desc[i].desc.int64_desc.has_default_value)
+                sCr_param_val[i].value.sint64_value = param_desc[i].desc.int64_desc.default_value;
             break;
         case cr_ParameterDataType_FLOAT64:
-            sCr_param_val[i].which_value = cr_ParameterValue_float64_value_tag;
-            if (param_desc[i].has_default_value)
-                sCr_param_val[i].value.float64_value = param_desc[i].default_value;
+            if (param_desc[i].desc.float64_desc.has_default_value)
+                sCr_param_val[i].value.float64_value = param_desc[i].desc.float64_desc.default_value;
             break;
         case cr_ParameterDataType_BOOL:
-            sCr_param_val[i].which_value = cr_ParameterValue_bool_value_tag;
-            if (param_desc[i].has_default_value)
-                sCr_param_val[i].value.bool_value = (bool)param_desc[i].default_value;
+            if (param_desc[i].desc.bool_desc.has_default_value)
+                sCr_param_val[i].value.bool_value = param_desc[i].desc.bool_desc.default_value;
             break;
         case cr_ParameterDataType_STRING:
-            sCr_param_val[i].which_value = cr_ParameterValue_string_value_tag;
+            if (param_desc[i].desc.string_desc.has_default_value)
+            {
+                memset(sCr_param_val[i].value.string_value, 0, sizeof(sCr_param_val[i].value.string_value));
+                memcpy(sCr_param_val[i].value.string_value, param_desc[i].desc.string_desc.default_value, sizeof(param_desc[i].desc.string_desc.default_value));
+            }
             break;
         case cr_ParameterDataType_ENUMERATION:
-            sCr_param_val[i].which_value = cr_ParameterValue_enum_value_tag;
-            if (param_desc[i].has_default_value)
-                sCr_param_val[i].value.enum_value = (uint32_t)param_desc[i].default_value;
+            if (param_desc[i].desc.enum_desc.has_default_value)
+                sCr_param_val[i].value.enum_value = param_desc[i].desc.enum_desc.default_value;
             break;
         case cr_ParameterDataType_BIT_FIELD:
-            sCr_param_val[i].which_value = cr_ParameterValue_bitfield_value_tag;
-            if (param_desc[i].has_default_value)
-                sCr_param_val[i].value.bitfield_value = (uint32_t)param_desc[i].default_value;
+            if (param_desc[i].desc.bitfield_desc.has_default_value)
+                sCr_param_val[i].value.bitfield_value = param_desc[i].desc.bitfield_desc.default_value;
             break;
         case cr_ParameterDataType_BYTE_ARRAY:
-            sCr_param_val[i].value.bytes_value.size = param_desc[i].size_in_bytes;
-            sCr_param_val[i].which_value = cr_ParameterValue_bytes_value_tag;
+            if (param_desc[i].desc.bytearray_desc.has_default_value)
+            {
+                sCr_param_val[i].value.bytes_value.size = param_desc[i].desc.bytearray_desc.default_value.size;
+                memcpy(sCr_param_val[i].value.bytes_value.bytes, param_desc[i].desc.bytearray_desc.default_value.bytes, sizeof(param_desc[i].desc.bytearray_desc.default_value.bytes));
+            }
+            else
+            {
+                if (param_desc[i].desc.bytearray_desc.has_max_size)
+                    sCr_param_val[i].value.bytes_value.size = param_desc[i].desc.bytearray_desc.max_size;
+                else
+                    sCr_param_val[i].value.bytes_value.size = sizeof(sCr_param_val[i].value.bytes_value.size);
+                memset(sCr_param_val[i].value.bytes_value.bytes, 0, sCr_param_val[i].value.bytes_value.size);
+            }
             break;
         default:
             affirm(0);  // should not happen.
             break;
         }  // end switch
+
+        // Convert from description type identifier to value type identifier
+        sCr_param_val[i].which_value = (param_desc[i].which_desc - cr_ParameterInfo_uint32_desc_tag) + cr_ParameterValue_uint32_value_tag;
 
         if (param_desc[i].storage_location == cr_StorageLocation_STORAGE_LOCATION_INVALID || param_desc[i].storage_location > cr_StorageLocation_NONVOLATILE_EXTENDED)
         {
@@ -370,43 +411,43 @@ int crcb_parameter_write(const uint32_t pid, const cr_ParameterValue *data)
     sCr_param_val[pid].timestamp = data->timestamp;
     sCr_param_val[pid].which_value = data->which_value;
 
-    switch (data->which_value)
+    switch ((data->which_value - cr_ParameterValue_uint32_value_tag))
     {
-        case cr_ParameterValue_uint32_value_tag:
+        case cr_ParameterDataType_UINT32:
             sCr_param_val[pid].value.uint32_value = data->value.uint32_value;
             break;
-        case cr_ParameterValue_sint32_value_tag:
+        case cr_ParameterDataType_INT32:
             sCr_param_val[pid].value.sint32_value = data->value.sint32_value;
             break;
-        case cr_ParameterValue_float32_value_tag:
+        case cr_ParameterDataType_FLOAT32:
             sCr_param_val[pid].value.float32_value = data->value.float32_value;
             break;
-        case cr_ParameterValue_uint64_value_tag:
+        case cr_ParameterDataType_UINT64:
             sCr_param_val[pid].value.uint64_value = data->value.uint64_value;
             break;
-        case cr_ParameterValue_sint64_value_tag:
+        case cr_ParameterDataType_INT64:
             sCr_param_val[pid].value.sint64_value = data->value.sint64_value;
             break;
-        case cr_ParameterValue_float64_value_tag:
+        case cr_ParameterDataType_FLOAT64:
             sCr_param_val[pid].value.float64_value = data->value.float64_value;
             break;
-        case cr_ParameterValue_bool_value_tag:
+        case cr_ParameterDataType_BOOL:
             sCr_param_val[pid].value.bool_value = data->value.bool_value;
             break;
-        case cr_ParameterValue_string_value_tag:
+        case cr_ParameterDataType_STRING:
             memcpy(sCr_param_val[pid].value.string_value,
                    data->value.string_value, REACH_PVAL_STRING_LEN);
             sCr_param_val[pid].value.string_value[REACH_PVAL_STRING_LEN-1] = 0;
             I3_LOG(LOG_MASK_PARAMS, "String value: %s",
                    sCr_param_val[pid].value.string_value);
             break;
-        case cr_ParameterValue_bitfield_value_tag:
+        case cr_ParameterDataType_BIT_FIELD:
             sCr_param_val[pid].value.bitfield_value = data->value.bitfield_value;
             break;
-        case cr_ParameterValue_enum_value_tag:
+        case cr_ParameterDataType_ENUMERATION:
             sCr_param_val[pid].value.enum_value = data->value.enum_value;
             break;
-        case cr_ParameterValue_bytes_value_tag:
+        case cr_ParameterDataType_BYTE_ARRAY:
             memcpy(sCr_param_val[pid].value.bytes_value.bytes,
                    data->value.bytes_value.bytes, 
                    REACH_PVAL_BYTES_LEN);
@@ -529,7 +570,7 @@ int crcb_parameter_ex_get_count(const int32_t pid)
     int num_ex_msgs = 0;
 
     for (int i=0; i<NUM_EX_PARAMS; i++) {
-        if ((int32_t)param_ex_desc[i].associated_pid == pid) {
+        if ((int32_t)param_ex_desc[i].enum_bitfield_id == pid) {
             num_ex_msgs++;
         }
     }
@@ -550,7 +591,7 @@ int crcb_parameter_ex_discover_reset(const int32_t pid)
 int crcb_parameter_ex_discover_next(cr_ParamExInfoResponse *pDesc)
 {
     affirm(pDesc);
-    pDesc->enumerations_count = 0;
+    pDesc->enums_bits_count = 0;
 #ifdef NUM_EX_PARAMS
     if (sCurrentExParam>=NUM_EX_PARAMS)
     {
@@ -568,7 +609,7 @@ int crcb_parameter_ex_discover_next(cr_ParamExInfoResponse *pDesc)
 
     for (int i=sCurrentExParam; i<NUM_EX_PARAMS; i++)
     {
-        if ((int32_t)param_ex_desc[i].associated_pid == sRequestedParamPid)
+        if ((int32_t)param_ex_desc[i].enum_bitfield_id == sRequestedParamPid)
         {
             I3_LOG(LOG_MASK_PARAMS, "%s: For pid %d, return param_ex %d.",
                    __FUNCTION__, sRequestedParamPid, sCurrentExParam);

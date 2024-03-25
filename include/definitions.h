@@ -77,9 +77,15 @@ typedef enum {
 } rgb_led_color_t;
 
 typedef enum {
-    RGB_LED_STATE_BIT_RED   = (0x1 << 0),
-    RGB_LED_STATE_BIT_GREEN = (0x1 << 1),
-    RGB_LED_STATE_BIT_BLUE  = (0x1 << 2),
+    RGB_LED_STATE_BIT_INDEX_RED,
+    RGB_LED_STATE_BIT_INDEX_GREEN,
+    RGB_LED_STATE_BIT_INDEX_BLUE,
+} rgb_led_state_indices_t;
+
+typedef enum {
+    RGB_LED_STATE_BIT_RED   = (0x1 << RGB_LED_STATE_BIT_INDEX_RED),
+    RGB_LED_STATE_BIT_GREEN = (0x1 << RGB_LED_STATE_BIT_INDEX_GREEN),
+    RGB_LED_STATE_BIT_BLUE  = (0x1 << RGB_LED_STATE_BIT_INDEX_BLUE),
 } rgb_led_state_t;
 
 typedef enum {
