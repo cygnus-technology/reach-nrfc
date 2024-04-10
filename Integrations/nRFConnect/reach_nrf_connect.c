@@ -31,6 +31,8 @@
 
 #include "reach_nrf_connect.h"
 
+#include <string.h>
+
 #include <zephyr/kernel.h>
 #include <zephyr/bluetooth/gatt.h>
 #include <zephyr/bluetooth/hci.h>
@@ -152,6 +154,9 @@ static bool cb_remove(circ_buf_t *cb, coded_buffer_t **c);
 static uint32_t cb_get_size(circ_buf_t *cb);
 #endif
 
+// strnlen is technically a Linux function and is often not found by the compiler.
+size_t strnlen( const char * s,size_t maxlen );
+
 /*******************************************************************************
  ***************************  LOCAL VARIABLES   ********************************
  ******************************************************************************/
@@ -221,12 +226,6 @@ void rnrfc_init(void)
         rnrfc_set_advertised_name(temp);
     }
     cr_test_sizes();
-
-// Currently, only the parameter repo has an init function
-#ifdef INCLUDE_PARAMETER_SERVICE
-    extern void init_param_repo();
-    init_param_repo();
-#endif
 
     cr_init();
 

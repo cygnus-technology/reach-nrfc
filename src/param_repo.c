@@ -49,7 +49,7 @@ int param_repo_reset_nvm(void)
         param.parameter_id = sCr_param_val[i].parameter_id;
         param.which_value = sCr_param_val[param.parameter_id].which_value;
         param.timestamp = k_uptime_get_32();
-        I3_LOG(LOG_MASK_ALWAYS, "Resetting ID %u, type %u", param.parameter_id, param.which_value);
+        I3_LOG(LOG_MASK_PARAMS, "Resetting ID %u, type %u", param.parameter_id, param.which_value);
         // Fill in default value if it's defined
         switch (param.which_value)
         {
@@ -253,6 +253,11 @@ int app_handle_param_repo_init(cr_ParameterValue *data, cr_ParameterInfo *desc)
         case PARAM_IDENTIFY_INTERVAL:
             rval = app_handle_param_repo_read(data);
             main_set_identify_interval(data->value.float32_value);
+            break;
+        case PARAM_USER_DEVICE_NAME:
+            // Advertise the user device name if it's been set
+	        if (sCr_param_val[PARAM_USER_DEVICE_NAME].value.string_value[0] != 0)
+		        rnrfc_set_advertised_name(sCr_param_val[PARAM_USER_DEVICE_NAME].value.string_value);
             break;
         default:
             // Call the standard read function

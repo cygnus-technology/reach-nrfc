@@ -34,7 +34,7 @@ By default, the dongle does not watch for changes to parameters so that they can
 The file service includes simple examples of read-only, read/write, and write-only files.  The `ota.bin` file is used for OTA updates, which is covered in its own section.  `cygnus-reach-logo.png` is a hardcoded image of the Reach logo.  `io.txt` is stored in persistent memory, and can be any file up to 2048 bytes.  By default, it contains the lyrics to "The Well" by The Crane Wives.
 
 #### Commands Service
-The `Reset Defaults` comand will reset all user-controlled parameters to their default values.  Additionally, it will reset `io.txt` to its default contents.  The `Reboot` and `Invalidate OTA Image` commands are mostly relevant to the OTA process, which is covered in its own section.
+The `Reset Defaults` command will reset all user-controlled parameters to their default values.  Additionally, it will reset `io.txt` to its default contents.  The `Reboot` and `Invalidate OTA Image` commands are mostly relevant to the OTA process, which is covered in its own section.  The `Click for Wisdom` command is used to demonstrate Reach's error reporting capabilities.
 
 #### Time Service
 The time service allows the dongle to report its internal time, and for the app/web portal to align the dongle to the correct time.  The time service is designed to support both devices which keep track of only the time and date, and devices which also keep track of their timezone (often relevant for devices with battery-backed real-time clocks).  Typically, a device would be one or the other, but the `Timezone Enabled` parameter has been provided to show how the app and web portal behave with either mode.  The `Timezone Offset` parameter shows the current timezone offset, which can be set manually as well as through the time service.  Setting it manually and then getting the time from the device should show the device time with the new offset.
@@ -64,7 +64,7 @@ Steps 1-6 cover setting up the nRF Connect development environment, so these may
    - In this window, navigate to `zephyr/subsys/bluetooth/host` and open the `adv.c` file
    - Comment out lines 857-859 of the file (which may also be found by searching for the first instance of `if (!atomic_test_bit(adv->flags, BT_ADV_ENABLED)) {`.
    - If this is not done, attempting to set the `User Device Name` parameter will result in an error which warns that this change may not have been made.
-8. Check out the repository from Bitbucket.  Make sure that there are no spaces in the path to the repository folder, as this has been known to break the build process.
+8. Check out the repository from Github.  Make sure that there are no spaces in the path to the repository folder, as this has been known to break the build process.
 9. In the nRF Connect extension, do "Open an existing application" and select the reacher-nrfc folder.  Once this has been opened, it should show up in the `APPLICATIONS` section as `reach-nrfc`.
 10. Under the `reach-nrfc` application, select "Add build configuration" to set up a new build.  Import the build configuration from the `nRF52840 Dongle` CMake preset, and hit "Build Configuration".  After this, the build should appear in the `APPLICATIONS` section, under the `reach-nrfc` application.
 

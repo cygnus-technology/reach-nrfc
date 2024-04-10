@@ -47,7 +47,7 @@
 #define INCLUDE_FILE_SERVICE
 #define NUM_FILES                 3
 #define INCLUDE_COMMAND_SERVICE
-#define NUM_COMMANDS              3
+#define NUM_COMMANDS              4
 #define INCLUDE_CLI_SERVICE
 #define INCLUDE_TIME_SERVICE
 
@@ -92,6 +92,7 @@ typedef enum {
     COMMAND_REBOOT,
     COMMAND_RESET_DEFAULTS,
     COMMAND_INVALIDATE_OTA_IMAGE,
+    COMMAND_CLICK_FOR_WISDOM,
 } command_t;
 
 extern cr_ParameterValue sCr_param_val[NUM_PARAMS];

@@ -88,7 +88,9 @@ int main(void)
         K_NO_WAIT);
 
 	dk_button_handler_add(&button);
-	rnrfc_init();
+
+	extern void init_param_repo();
+	init_param_repo();
 
 	extern void files_init(void);
 	files_init();
@@ -96,9 +98,7 @@ int main(void)
 	extern void cli_init(void);
 	cli_init();
 
-	// Advertise the user device name if it's been set
-	if (sCr_param_val[PARAM_USER_DEVICE_NAME].value.string_value[0] != 0)
-		rnrfc_set_advertised_name(sCr_param_val[PARAM_USER_DEVICE_NAME].value.string_value);
+	rnrfc_init();
 
 	main_set_rgb_led_state(RGB_LED_COLOR_GREEN);
 
