@@ -9,6 +9,6 @@
 
 #define APP_MAJOR_VERSION 0
 #define APP_MINOR_VERSION 0
-#define APP_PATCH_VERSION 1
+#define APP_PATCH_VERSION 2
 
 #endif  // ndef _APP_VERSION_H_

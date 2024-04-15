@@ -24,7 +24,6 @@
 
 #define CLI_TASK_STACK_SIZE 2048
 #define CLI_TASK_PRIORITY 5
-#define CLI_SHUTDOWN_TIME_MS (60 * 1000)
 
 static void cli_task(void *arg, void *param2, void *param3);
 
@@ -104,7 +103,7 @@ void print_versions(void)
     i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Reach nRF52840 Dongle demo, built %s, %s", __DATE__, __TIME__);
     i3_log(LOG_MASK_ALWAYS, TEXT_CLI "nRF Connect SDK version %s", NCS_VERSION_STRING);
     i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Reach stack version %s", cr_get_reach_version());
-    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Reach protobuf version %u", cr_get_proto_version());
+    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Reach protobuf version %s", cr_get_proto_version());
     i3_log(LOG_MASK_ALWAYS, TEXT_CLI "App version %u.%u.%u", APP_MAJOR_VERSION, APP_MINOR_VERSION, APP_PATCH_VERSION);
 }
 
@@ -150,13 +149,17 @@ static void slash(void)
     {
         i3_log(LOG_MASK_ALWAYS, TEXT_CLI "File system: %u/%u blocks (%u bytes each) remaining", fs_stats.f_bfree, fs_stats.f_blocks, fs_stats.f_frsize);
     }
-    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Current log mask: 0x%x", i3_log_get_mask());
+
+    // System information
     bt_addr_le_t ble_id;
     size_t id_count = 1;
     bt_id_get(&ble_id, &id_count);
     i3_log(LOG_MASK_ALWAYS, TEXT_CLI "BLE Device Address: %02X:%02X:%02X:%02X:%02X:%02X",
         ble_id.a.val[5], ble_id.a.val[4], ble_id.a.val[3], ble_id.a.val[2], ble_id.a.val[1], ble_id.a.val[0]);
     i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Uptime: %.3f seconds", ((float) k_uptime_get()) / 1000);
+
+    // Reach information
+    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Current log mask: 0x%x", i3_log_get_mask());
   #ifdef ENABLE_REMOTE_CLI
     if (i3_log_get_remote_cli_enable())
         i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Remote CLI support enabled.");

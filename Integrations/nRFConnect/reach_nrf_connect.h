@@ -96,11 +96,13 @@ int rnrfc_set_advertised_name(char *name);
 
 /**
 * @brief A callback for when a device connects via BLE, which can be used for app-specific actions
+* @note This is implemented as a weak function which returns immediately in reach_nrf_connect.c
 */
 void rnrfc_app_handle_ble_connection(void);
 
 /**
 * @brief A callback for when a device disconnects via BLE, which can be used for app-specific actions
+* @note This is implemented as a weak function which returns immediately in reach_nrf_connect.c
 */
 void rnrfc_app_handle_ble_disconnection(void);
 

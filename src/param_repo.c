@@ -49,7 +49,7 @@ int param_repo_reset_nvm(void)
         param.parameter_id = sCr_param_val[i].parameter_id;
         param.which_value = sCr_param_val[param.parameter_id].which_value;
         param.timestamp = k_uptime_get_32();
-        I3_LOG(LOG_MASK_ALWAYS, "Resetting ID %u, type %u", param.parameter_id, param.which_value);
+        I3_LOG(LOG_MASK_PARAMS, "Resetting ID %u, type %u", param.parameter_id, param.which_value);
         // Fill in default value if it's defined
         switch (param.which_value)
         {
@@ -249,6 +249,11 @@ int app_handle_param_repo_init(cr_ParameterValue *data, cr_ParameterInfo *desc)
             rval = app_handle_param_repo_read(data);
             main_set_identify_interval(data->value.float32_value);
             break;
+        case PARAM_USER_DEVICE_NAME:
+            // Advertise the user device name if it's been set
+	        if (sCr_param_val[PARAM_USER_DEVICE_NAME].value.string_value[0] != 0)
+		        rnrfc_set_advertised_name(sCr_param_val[PARAM_USER_DEVICE_NAME].value.string_value);
+            break;
         default:
             // Call the standard read function
             rval = app_handle_param_repo_read(data);
@@ -326,13 +331,18 @@ int app_handle_param_repo_read(cr_ParameterValue *data)
 int app_handle_param_repo_write(cr_ParameterValue *data)
 {
     int rval = 0;
+
     // If needed, check if data is valid before allowing the write to occur
     // This is only necessary if there are limits on the parameter outside of min/max values (for example, needing to be a multiple of 5)
-    // switch (data->parameter_id)
-    // {
-    //     default:
-    //         break;
-    // }
+    switch (data->parameter_id)
+    {
+        case PARAM_USER_DEVICE_NAME:
+            if (strnlen(data->value.string_value, sizeof(data->value.string_value)) >= APP_ADVERTISED_NAME_LENGTH)
+                return cr_ErrorCodes_WRITE_FAILED;
+            break;
+        default:
+            break;
+    }
 
 #ifdef PARAM_REPO_USE_FILE_STORAGE
     // Only think about the NVM if file access hasn't failed

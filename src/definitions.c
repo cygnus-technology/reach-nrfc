@@ -261,6 +261,10 @@ cr_CommandInfo command_desc[NUM_COMMANDS] = {
     {
         .id   = COMMAND_INVALIDATE_OTA_IMAGE,
         .name = "Invalidate OTA Image",
+    },
+    {
+        .id   = COMMAND_CLICK_FOR_WISDOM,
+        .name = "Click for Wisdom",
     }
 };
 

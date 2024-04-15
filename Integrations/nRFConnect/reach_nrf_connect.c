@@ -31,6 +31,8 @@
 
 #include "reach_nrf_connect.h"
 
+#include <string.h>
+
 #include <zephyr/kernel.h>
 #include <zephyr/bluetooth/gatt.h>
 #include <zephyr/bluetooth/hci.h>
@@ -104,8 +106,8 @@
 
 #define BT_LE_AD_LOW_POWER BT_LE_ADV_PARAM(BT_LE_ADV_OPT_CONNECTABLE, BLE_ADV_INTERVAL_MIN, BLE_ADV_INTERVAL_MAX, NULL)
 
-#if (APP_ADVERTISED_NAME_LENGTH > 27)
-#error "nRF Connect BLE advertised name length cannot be greater than 27 characters"
+#if (APP_ADVERTISED_NAME_LENGTH > 30)
+#error "nRF Connect BLE advertised name length cannot be greater than 30 characters"
 #endif
 
 #define REACH_SERVICE_UUID_DECLARE BT_UUID_DECLARE_128(REACH_SERVICE_UUID)
@@ -152,20 +154,23 @@ static bool cb_remove(circ_buf_t *cb, coded_buffer_t **c);
 static uint32_t cb_get_size(circ_buf_t *cb);
 #endif
 
+// strnlen is technically a Linux function and is often not found by the compiler.
+size_t strnlen( const char * s,size_t maxlen );
+
 /*******************************************************************************
  ***************************  LOCAL VARIABLES   ********************************
  ******************************************************************************/
 
 // Advertising data
 char advertised_name[APP_ADVERTISED_NAME_LENGTH];
-static struct bt_data ad[] = {
+static const struct bt_data ad[] = {
     BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
-    BT_DATA(BT_DATA_NAME_COMPLETE, advertised_name, 0),
+    BT_DATA_BYTES(BT_DATA_UUID128_ALL, REACH_SERVICE_UUID),
 };
 
 // Scanning data
-static const struct bt_data sd[] = {
-    BT_DATA_BYTES(BT_DATA_UUID128_ALL, REACH_SERVICE_UUID),
+static struct bt_data sd[] = {
+    BT_DATA(BT_DATA_NAME_COMPLETE, advertised_name, 0),
 };
 
 // Data for reading/writing the Reach characteristic
@@ -222,12 +227,6 @@ void rnrfc_init(void)
     }
     cr_test_sizes();
 
-// Currently, only the parameter repo has an init function
-#ifdef INCLUDE_PARAMETER_SERVICE
-    extern void init_param_repo();
-    init_param_repo();
-#endif
-
     cr_init();
 
     ble_task_id = k_thread_create(
@@ -268,16 +267,20 @@ int rnrfc_set_advertised_name(char *name)
         return -1;
     memset(advertised_name, 0, sizeof(advertised_name));
     strncpy(advertised_name, name, sizeof(advertised_name));
-    ad[1].data_len = (uint8_t) name_length;
+    sd[0].data_len = (uint8_t) name_length;
     if (ble_advertising_started)
     {
-        rval = bt_le_adv_update_data(ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
+        rval = bt_le_adv_stop();
         if (rval)
         {
-            I3_LOG(LOG_MASK_ERROR, "Bluetooth advertising failed to update (err %d)", rval);
-            if (rval == -EAGAIN)
-                I3_LOG(LOG_MASK_WARN, "This error may indicate that the <SDK>/zephyr/subsys/bluetooth/host/adv.c file has not been modified to allow setting the advertised name when not advertising");
+            I3_LOG(LOG_MASK_ERROR, "Failed to stop BLE advertising, error %d", rval);
             rval = -2;
+        }
+        rval = bt_le_adv_start(BT_LE_AD_LOW_POWER, ad, ARRAY_SIZE(ad), sd, ARRAY_SIZE(sd));
+        if (rval)
+        {
+            I3_LOG(LOG_MASK_ERROR, "Failed to restart BLE advertising, error %d", rval);
+            rval = -3;
         }
     }
     cr_set_advertised_name(advertised_name, name_length);

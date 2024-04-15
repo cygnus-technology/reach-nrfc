@@ -20,7 +20,8 @@
 #include "const_files.h"
 #include "fs_utils.h"
 
-// If defined, the flash partitioning must be changed to allow enough space for two active files
+// If not defined, all files will just be stored in RAM.
+// If pm_static.yml is removed, there will not be space in the file system for this and the param repo
 #define FILES_USE_NVM_STORAGE
 
 #define MAXIMUM_OTA_SIZE FLASH_AREA_SIZE(image_1)
@@ -244,9 +245,8 @@ int crcb_file_transfer_complete(const uint32_t fid)
             int rval = fs_utils_update_file(IO_TXT_FILENAME, (uint8_t *) io_txt, io_txt_size);
             if (rval != 0)
                 I3_LOG(LOG_MASK_ERROR, "io.txt write failed, error %d", rval);
-            else
 #endif
-                file_descriptions[FILE_IO_TXT].current_size_bytes = (int32_t) io_txt_size;
+            file_descriptions[FILE_IO_TXT].current_size_bytes = (int32_t) io_txt_size;
             break;
         default:
             return cr_ErrorCodes_BAD_FILE;
