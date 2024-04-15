@@ -62,8 +62,7 @@ cr_ParameterInfo param_desc[NUM_PARAMS] = {
         .which_desc        = cr_ParameterDataType_STRING + cr_ParameterInfo_uint32_desc_tag,
         .desc.string_desc.has_default_value = true,
         .desc.string_desc.default_value = "Test",
-        .desc.string_desc.has_max_size = true,
-        .desc.string_desc.max_size = 26,
+        .desc.string_desc.max_size = 29,
         .access            = cr_AccessLevel_READ_WRITE,
         .storage_location  = cr_StorageLocation_NONVOLATILE,
         .has_description   = true,
@@ -77,10 +76,8 @@ cr_ParameterInfo param_desc[NUM_PARAMS] = {
         .storage_location  = cr_StorageLocation_NONVOLATILE,
         .desc.bool_desc.has_default_value = true,
         .desc.bool_desc.default_value     = true,
-        .desc.bool_desc.has_off_text = true,
-        .desc.bool_desc.off_text = "Non-timezoned",
-        .desc.bool_desc.has_on_text = true,
-        .desc.bool_desc.on_text = "Timezoned",
+        .desc.bool_desc.has_pei_id        = true,
+        .desc.bool_desc.pei_id            = 2,
     },
     {
         .id                = PARAM_TIMEZONE_OFFSET,
@@ -103,7 +100,6 @@ cr_ParameterInfo param_desc[NUM_PARAMS] = {
         .id                = PARAM_BT_DEVICE_ADDRESS,
         .name              = "BT Device Address",
         .which_desc         = cr_ParameterDataType_BYTE_ARRAY + cr_ParameterInfo_uint32_desc_tag,
-        .desc.bytearray_desc.has_max_size = true,
         .desc.bytearray_desc.max_size     = 6,
         .access            = cr_AccessLevel_READ,
         .storage_location  = cr_StorageLocation_RAM,
@@ -121,10 +117,8 @@ cr_ParameterInfo param_desc[NUM_PARAMS] = {
         .id                = PARAM_BUTTON_PRESSED,
         .name              = "Momentary Pushbutton",
         .which_desc        = cr_ParameterDataType_BOOL + cr_ParameterInfo_uint32_desc_tag,
-        .desc.bool_desc.has_off_text = true,
-        .desc.bool_desc.off_text = "Not Pressed",
-        .desc.bool_desc.has_on_text = true,
-        .desc.bool_desc.on_text = "Pressed",
+        .desc.bool_desc.has_pei_id        = true,
+        .desc.bool_desc.pei_id            = 4,
         .access            = cr_AccessLevel_READ,
         .storage_location  = cr_StorageLocation_RAM,
     },
@@ -132,10 +126,8 @@ cr_ParameterInfo param_desc[NUM_PARAMS] = {
         .id                = PARAM_IDENTIFY_LED_ON,
         .name              = "Identify LED",
         .which_desc        = cr_ParameterDataType_BOOL + cr_ParameterInfo_uint32_desc_tag,
-        .desc.bool_desc.has_off_text = true,
-        .desc.bool_desc.off_text = "Off",
-        .desc.bool_desc.has_on_text = true,
-        .desc.bool_desc.on_text = "On",
+        .desc.bool_desc.has_pei_id        = true,
+        .desc.bool_desc.pei_id            = 5,
         .access            = cr_AccessLevel_READ,
         .storage_location  = cr_StorageLocation_RAM,
     },
@@ -143,10 +135,9 @@ cr_ParameterInfo param_desc[NUM_PARAMS] = {
         .id                = PARAM_RGB_LED_STATE,
         .name              = "RGB LED State",
         .which_desc        = cr_ParameterDataType_BIT_FIELD + cr_ParameterInfo_uint32_desc_tag,
-        .desc.bitfield_desc.has_bits_available = true,
         .desc.bitfield_desc.bits_available = 3,
-        .desc.bitfield_desc.has_definition_id = true,
-        .desc.bitfield_desc.definition_id = 1,
+        .desc.bitfield_desc.has_pei_id = true,
+        .desc.bitfield_desc.pei_id = 1,
         .access            = cr_AccessLevel_READ_WRITE,
         .storage_location  = cr_StorageLocation_RAM,
         .has_description   = true,
@@ -156,8 +147,8 @@ cr_ParameterInfo param_desc[NUM_PARAMS] = {
         .id                = PARAM_RGB_LED_COLOR,
         .name              = "RGB LED Color",
         .which_desc         = cr_ParameterDataType_ENUMERATION + cr_ParameterInfo_uint32_desc_tag,
-        .desc.enum_desc.has_definition_id = true,
-        .desc.enum_desc.definition_id = 0,
+        .desc.enum_desc.has_pei_id = true,
+        .desc.enum_desc.pei_id = 0,
         .access            = cr_AccessLevel_READ_WRITE,
         .storage_location  = cr_StorageLocation_RAM,
         .has_description   = true,
@@ -167,10 +158,7 @@ cr_ParameterInfo param_desc[NUM_PARAMS] = {
         .id                = PARAM_IDENTIFY,
         .name              = "Identify",
         .which_desc        = cr_ParameterDataType_BOOL + cr_ParameterInfo_uint32_desc_tag,
-        .desc.bool_desc.has_off_text = true,
-        .desc.bool_desc.off_text = "Not Identifying",
-        .desc.bool_desc.has_on_text = true,
-        .desc.bool_desc.on_text = "Identifying",
+        .desc.bool_desc.pei_id = 3,
         .access            = cr_AccessLevel_READ_WRITE,
         .storage_location  = cr_StorageLocation_RAM,
         .has_description   = true,
@@ -199,10 +187,10 @@ cr_ParameterInfo param_desc[NUM_PARAMS] = {
 
 cr_ParamExInfoResponse param_ex_desc[NUM_EX_PARAMS] = {
     {
-        .enum_bitfield_id = 0,
+        .pei_id = 0,
         .data_type = cr_ParameterDataType_ENUMERATION,
-        .enums_bits_count = 8,
-        .enums_bits = {
+        .keys_count = 8,
+        .keys = {
             {RGB_LED_COLOR_OFF,     "Off"},
             {RGB_LED_COLOR_RED,     "Red"},
             {RGB_LED_COLOR_GREEN,   "Green"},
@@ -214,15 +202,51 @@ cr_ParamExInfoResponse param_ex_desc[NUM_EX_PARAMS] = {
         }
     },
     {
-        .enum_bitfield_id = 1,
+        .pei_id = 1,
         .data_type = cr_ParameterDataType_BIT_FIELD,
-        .enums_bits_count = 3,
-        .enums_bits = {
+        .keys_count = 3,
+        .keys = {
             {RGB_LED_STATE_BIT_INDEX_RED,   "Red"},
             {RGB_LED_STATE_BIT_INDEX_GREEN, "Green"},
             {RGB_LED_STATE_BIT_INDEX_BLUE,  "Blue"}
         }
-    }
+    },
+    {
+        .pei_id = 2,
+        .data_type = cr_ParameterDataType_BOOL,
+        .keys_count = 2,
+        .keys = {
+            {0, "Non-timezoned"},
+            {1, "Timezoned"}
+        }
+    },
+    {
+        .pei_id = 3,
+        .data_type = cr_ParameterDataType_BOOL,
+        .keys_count = 2,
+        .keys = {
+            {0, "Not Identifying"},
+            {1, "Identifying"}
+        }
+    },
+    {
+        .pei_id = 4,
+        .data_type = cr_ParameterDataType_BOOL,
+        .keys_count = 2,
+        .keys = {
+            {0, "Not Pressed"},
+            {1, "Pressed"}
+        }
+    },
+    {
+        .pei_id = 5,
+        .data_type = cr_ParameterDataType_BOOL,
+        .keys_count = 2,
+        .keys = {
+            {0, "Off"},
+            {1, "On"}
+        }
+    },
 };
 
 cr_FileInfo file_descriptions[NUM_FILES] = {
@@ -354,10 +378,7 @@ void init_param_repo()
             }
             else
             {
-                if (param_desc[i].desc.bytearray_desc.has_max_size)
-                    sCr_param_val[i].value.bytes_value.size = param_desc[i].desc.bytearray_desc.max_size;
-                else
-                    sCr_param_val[i].value.bytes_value.size = sizeof(sCr_param_val[i].value.bytes_value.size);
+                sCr_param_val[i].value.bytes_value.size = param_desc[i].desc.bytearray_desc.max_size;
                 memset(sCr_param_val[i].value.bytes_value.bytes, 0, sCr_param_val[i].value.bytes_value.size);
             }
             break;
@@ -574,7 +595,7 @@ int crcb_parameter_ex_get_count(const int32_t pid)
     int num_ex_msgs = 0;
 
     for (int i=0; i<NUM_EX_PARAMS; i++) {
-        if ((int32_t)param_ex_desc[i].enum_bitfield_id == pid) {
+        if ((int32_t)param_ex_desc[i].pei_id == pid) {
             num_ex_msgs++;
         }
     }
@@ -595,7 +616,7 @@ int crcb_parameter_ex_discover_reset(const int32_t pid)
 int crcb_parameter_ex_discover_next(cr_ParamExInfoResponse *pDesc)
 {
     affirm(pDesc);
-    pDesc->enums_bits_count = 0;
+    pDesc->keys_count = 0;
 #ifdef NUM_EX_PARAMS
     if (sCurrentExParam>=NUM_EX_PARAMS)
     {
@@ -613,7 +634,7 @@ int crcb_parameter_ex_discover_next(cr_ParamExInfoResponse *pDesc)
 
     for (int i=sCurrentExParam; i<NUM_EX_PARAMS; i++)
     {
-        if ((int32_t)param_ex_desc[i].enum_bitfield_id == sRequestedParamPid)
+        if ((int32_t)param_ex_desc[i].pei_id == sRequestedParamPid)
         {
             I3_LOG(LOG_MASK_PARAMS, "%s: For pid %d, return param_ex %d.",
                    __FUNCTION__, sRequestedParamPid, sCurrentExParam);

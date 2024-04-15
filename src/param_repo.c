@@ -104,10 +104,7 @@ int param_repo_reset_nvm(void)
                 }
                 else
                 {
-                    if (param_desc[i].desc.bytearray_desc.has_max_size)
-                        sCr_param_val[i].value.bytes_value.size = param_desc[i].desc.bytearray_desc.max_size;
-                    else
-                        sCr_param_val[i].value.bytes_value.size = sizeof(sCr_param_val[i].value.bytes_value.size);
+                    sCr_param_val[i].value.bytes_value.size = param_desc[i].desc.bytearray_desc.max_size;
                     memset(sCr_param_val[i].value.bytes_value.bytes, 0, sCr_param_val[i].value.bytes_value.size);
                 }
                 break;

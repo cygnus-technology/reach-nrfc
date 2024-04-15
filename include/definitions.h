@@ -43,7 +43,7 @@
 
 #define INCLUDE_PARAMETER_SERVICE
 #define NUM_PARAMS                11
-#define NUM_EX_PARAMS             2
+#define NUM_EX_PARAMS             6
 #define INCLUDE_FILE_SERVICE
 #define NUM_FILES                 3
 #define INCLUDE_COMMAND_SERVICE
