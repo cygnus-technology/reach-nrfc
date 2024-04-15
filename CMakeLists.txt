@@ -14,7 +14,6 @@ project(reach-nrfc)
 include_directories(
 	./include
 	./reach-c-stack/include
-	./reach-c-stack/third_party/cjson
 	./reach-c-stack/third_party/nanopb
 	./Integrations/nRFConnect
 )
@@ -38,7 +37,6 @@ target_sources(app PRIVATE
 	reach-c-stack/src/reach_client.c
 	reach-c-stack/src/reach_decode.c
 	reach-c-stack/src/reach.pb.c
-	reach-c-stack/third_party/cjson/cJSON.c
 	reach-c-stack/third_party/nanopb/pb_common.c
 	reach-c-stack/third_party/nanopb/pb_decode.c
 	reach-c-stack/third_party/nanopb/pb_encode.c

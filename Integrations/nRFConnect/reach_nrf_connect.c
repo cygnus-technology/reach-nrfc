@@ -305,17 +305,17 @@ int crcb_send_coded_response(const uint8_t *respBuf, size_t respSize)
 }
 
 #ifdef INCLUDE_FILE_SERVICE
-int crcb_file_get_preferred_ack_rate(bool is_write)
+int crcb_file_get_preferred_ack_rate(uint32_t fid, uint32_t requested_rate, bool is_write)
 {
     I3_LOG(LOG_MASK_WARN, "Logging can interfere with file write.");
     if (is_write)
 #if (BLE_WRITE_CIRCULAR_BUFFER_SIZE > 1)
-        return BLE_WRITE_CIRCULAR_BUFFER_SIZE - 1;
+        return (requested_rate < (BLE_WRITE_CIRCULAR_BUFFER_SIZE - 1)) ? requested_rate:BLE_WRITE_CIRCULAR_BUFFER_SIZE - 1;
 #else
         return 1;
 #endif
     else
-        return 0;
+        return requested_rate;
 }
 #endif // INCLUDE_FILE_SERVICE
 
