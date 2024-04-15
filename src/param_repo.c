@@ -336,13 +336,18 @@ int app_handle_param_repo_read(cr_ParameterValue *data)
 int app_handle_param_repo_write(cr_ParameterValue *data)
 {
     int rval = 0;
+
     // If needed, check if data is valid before allowing the write to occur
     // This is only necessary if there are limits on the parameter outside of min/max values (for example, needing to be a multiple of 5)
-    // switch (data->parameter_id)
-    // {
-    //     default:
-    //         break;
-    // }
+    switch (data->parameter_id)
+    {
+        case PARAM_USER_DEVICE_NAME:
+            if (strnlen(data->value.string_value, sizeof(data->value.string_value)) >= APP_ADVERTISED_NAME_LENGTH)
+                return cr_ErrorCodes_WRITE_FAILED;
+            break;
+        default:
+            break;
+    }
 
 #ifdef PARAM_REPO_USE_FILE_STORAGE
     // Only think about the NVM if file access hasn't failed

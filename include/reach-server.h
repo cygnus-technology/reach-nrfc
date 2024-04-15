@@ -51,7 +51,7 @@
 // The app is to provide the raw memory to be encoded.
 #define CR_DECODED_BUFFER_SIZE   256
 
-#define APP_ADVERTISED_NAME_LENGTH 27
+#define APP_ADVERTISED_NAME_LENGTH 30
 
 // Define this to enable remote CLI via a buffer.
 #define ENABLE_REMOTE_CLI

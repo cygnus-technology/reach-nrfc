@@ -3,6 +3,7 @@ build/
 
 # Backup files
 *.md.backup
+~$nRF52840 Dongle Demo.xlsx
 
 # Python files
 __pycache__/

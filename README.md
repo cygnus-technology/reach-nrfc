@@ -59,14 +59,9 @@ Steps 1-6 cover setting up the nRF Connect development environment, so these may
 4. Install SDK v2.6.0 from within the Toolchain Manager
 5. Install [nRF Connect Command Line Tools](https://www.nordicsemi.com/Products/Development-tools/nrf-command-line-tools/download)
 6. Open VS Code through the toolchain manager for SDK v2.6.0, and install the recommended extensions
-7. To allow the BLE advertisement to be changed while not advertising (particularly when connected), a file within the SDK must be modified.
-   - In the toolchain manager, select the drop-down for the 2.6.0 SDK, and hit `Open SDK directory`
-   - In this window, navigate to `zephyr/subsys/bluetooth/host` and open the `adv.c` file
-   - Comment out lines 857-859 of the file (which may also be found by searching for the first instance of `if (!atomic_test_bit(adv->flags, BT_ADV_ENABLED)) {`.
-   - If this is not done, attempting to set the `User Device Name` parameter will result in an error which warns that this change may not have been made.
-8. Check out the repository from Github.  Make sure that there are no spaces in the path to the repository folder, as this has been known to break the build process.
-9. In the nRF Connect extension, do "Open an existing application" and select the reacher-nrfc folder.  Once this has been opened, it should show up in the `APPLICATIONS` section as `reach-nrfc`.
-10. Under the `reach-nrfc` application, select "Add build configuration" to set up a new build.  Import the build configuration from the `nRF52840 Dongle` CMake preset, and hit "Build Configuration".  After this, the build should appear in the `APPLICATIONS` section, under the `reach-nrfc` application.
+7. Check out the repository from Github.  Make sure that there are no spaces in the path to the repository folder, as this has been known to break the build process.
+8. In the nRF Connect extension, do "Open an existing application" and select the reacher-nrfc folder.  Once this has been opened, it should show up in the `APPLICATIONS` section as `reach-nrfc`.
+9. Under the `reach-nrfc` application, select "Add build configuration" to set up a new build.  Import the build configuration from the `nRF52840 Dongle` CMake preset, and hit "Build Configuration".  After this, the build should appear in the `APPLICATIONS` section, under the `reach-nrfc` application.
 
 For future builds, select the relevant build (the selected build is highlighted in blue and has an open file folder icon), and hit the `Build` button within the nRF Connect extension tab, under `ACTIONS`.  To program the board via the nRF Connect programmer, use the `zephyr/merged.hex` file in the build folder.  To do an OTA update as described above, use the `zephyr/app_update.bin` file.
 
