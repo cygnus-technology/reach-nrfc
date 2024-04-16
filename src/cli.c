@@ -35,9 +35,9 @@ struct k_thread cli_task_data;
 k_tid_t cli_task_id;
 
 #ifdef DEV_BUILD
-static const char sAppVersion[CR_STACK_VERSION_LEN] = TOSTRING(APP_MAJOR_VERSION) "." TOSTRING(APP_MINOR_VERSION) "." TOSTRING(APP_PATCH_VERSION) "-dev";
+static const char sAppVersion[] = TOSTRING(APP_MAJOR_VERSION) "." TOSTRING(APP_MINOR_VERSION) "." TOSTRING(APP_PATCH_VERSION) "-dev";
 #else
-static const char sAppVersion[CR_STACK_VERSION_LEN] = TOSTRING(APP_MAJOR_VERSION) "." TOSTRING(APP_MINOR_VERSION) "." TOSTRING(APP_PATCH_VERSION);
+static const char sAppVersion[] = TOSTRING(APP_MAJOR_VERSION) "." TOSTRING(APP_MINOR_VERSION) "." TOSTRING(APP_PATCH_VERSION);
 #endif
 
 static void slash(void);
