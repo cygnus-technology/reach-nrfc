@@ -81,7 +81,10 @@ static void cli_task(void *arg, void *param2, void *param3)
                     uart_poll_out(uart_dev, '\r');
                     uart_poll_out(uart_dev, '\n');
                     if (input_length == 0)
+                    {
+                        uart_poll_out(uart_dev, '>');
                         break; // No data, no need to call anything
+                    }
                     input[input_length] = 0; // Null-terminate the string
                     crcb_cli_enter((const char *) input);
                     input_length = 0;
