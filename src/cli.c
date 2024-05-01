@@ -25,11 +25,20 @@
 #define CLI_TASK_STACK_SIZE 2048
 #define CLI_TASK_PRIORITY 5
 
+#define TOSTRING_LAYER_ONE(x) #x
+#define TOSTRING(x) TOSTRING_LAYER_ONE(x)
+
 static void cli_task(void *arg, void *param2, void *param3);
 
 K_THREAD_STACK_DEFINE(cli_task_stack_area, CLI_TASK_STACK_SIZE);
 struct k_thread cli_task_data;
 k_tid_t cli_task_id;
+
+#ifdef DEV_BUILD
+static const char sAppVersion[] = TOSTRING(APP_MAJOR_VERSION) "." TOSTRING(APP_MINOR_VERSION) "." TOSTRING(APP_PATCH_VERSION) "-dev";
+#else
+static const char sAppVersion[] = TOSTRING(APP_MAJOR_VERSION) "." TOSTRING(APP_MINOR_VERSION) "." TOSTRING(APP_PATCH_VERSION);
+#endif
 
 static void slash(void);
 static void lm(const char *input);
@@ -51,6 +60,11 @@ static void cli_task(void *arg, void *param2, void *param3)
     char input[64];
     uint8_t input_length = 0;
     const struct device *uart_dev = DEVICE_DT_GET_ONE(zephyr_cdc_acm_uart);
+    char clear_screen[] = "\033[2J\033]H";
+    for (int i = 0; i < sizeof(clear_screen); i++)
+        uart_poll_out(uart_dev, clear_screen[i]);
+    print_versions();
+    uart_poll_out(uart_dev, '>');
     while (1)
     {
         if (input_length == sizeof(input))
@@ -67,11 +81,15 @@ static void cli_task(void *arg, void *param2, void *param3)
                     uart_poll_out(uart_dev, '\r');
                     uart_poll_out(uart_dev, '\n');
                     if (input_length == 0)
+                    {
+                        uart_poll_out(uart_dev, '>');
                         break; // No data, no need to call anything
+                    }
                     input[input_length] = 0; // Null-terminate the string
                     crcb_cli_enter((const char *) input);
                     input_length = 0;
                     memset(input, 0, sizeof(input));
+                    uart_poll_out(uart_dev, '>');
                     break;
                 case '\n':
                     break; // Ignore, only expect '\r' for command execution
@@ -98,13 +116,18 @@ static void cli_task(void *arg, void *param2, void *param3)
 
 }
 
+const char *get_app_version()
+{
+    return sAppVersion;
+}
+
 void print_versions(void)
 {
     i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Reach nRF52840 Dongle demo, built %s, %s", __DATE__, __TIME__);
-    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "nRF Connect SDK version %s", NCS_VERSION_STRING);
-    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Reach stack version %s", cr_get_reach_version());
-    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Reach protobuf version %s", cr_get_proto_version());
-    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "App version %u.%u.%u", APP_MAJOR_VERSION, APP_MINOR_VERSION, APP_PATCH_VERSION);
+    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  nRF Connect SDK version %s", NCS_VERSION_STRING);
+    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  Reach stack version %s", cr_get_reach_version());
+    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  Reach protobuf version %s", cr_get_proto_version());
+    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  App version %s", get_app_version());
 }
 
 int crcb_cli_enter(const char *ins)
@@ -117,7 +140,7 @@ int crcb_cli_enter(const char *ins)
     if ((*ins == '?') || (!strncmp("help", ins, 4)) )
     {
         i3_log(LOG_MASK_ALWAYS, TEXT_GREEN "!!! Reach nRF52840 Dongle demo, built %s, %s", __DATE__, __TIME__);
-        i3_log(LOG_MASK_ALWAYS, TEXT_GREEN "!!! App Version %d.%d.%d", APP_MAJOR_VERSION, APP_MINOR_VERSION, APP_PATCH_VERSION);
+        i3_log(LOG_MASK_ALWAYS, TEXT_GREEN "!!! App Version %s", get_app_version());
         i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Commands:");
         i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  ver : Print versions");
         i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  /   : Display status");
