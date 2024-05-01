@@ -31,10 +31,10 @@ target_sources(app PRIVATE
 	reach-c-stack/src/cr_files.c
 	reach-c-stack/src/cr_params.c
 	reach-c-stack/src/cr_stack.c
+	reach-c-stack/src/cr_streams.c
 	reach-c-stack/src/crcb_weak.c
 	reach-c-stack/src/i3_log.c
 	reach-c-stack/src/message_util.c
-	reach-c-stack/src/reach_client.c
 	reach-c-stack/src/reach_decode.c
 	reach-c-stack/src/reach.pb.c
 	reach-c-stack/third_party/nanopb/pb_common.c
