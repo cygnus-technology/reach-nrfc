@@ -57,9 +57,9 @@ int param_repo_reset_nvm(void)
                 if (param_desc[i].desc.uint32_desc.has_default_value)
                     sCr_param_val[i].value.uint32_value = param_desc[i].desc.uint32_desc.default_value;
                 break;
-            case cr_ParameterValue_sint32_value_tag:
+            case cr_ParameterValue_int32_value_tag:
                 if (param_desc[i].desc.int32_desc.has_default_value)
-                    sCr_param_val[i].value.sint32_value = param_desc[i].desc.int32_desc.default_value;
+                    sCr_param_val[i].value.int32_value = param_desc[i].desc.int32_desc.default_value;
                 break;
             case cr_ParameterValue_float32_value_tag:
                 if (param_desc[i].desc.float32_desc.has_default_value)
@@ -69,9 +69,9 @@ int param_repo_reset_nvm(void)
                 if (param_desc[i].desc.uint64_desc.has_default_value)
                     sCr_param_val[i].value.uint64_value = param_desc[i].desc.uint64_desc.default_value;
                 break;
-            case cr_ParameterValue_sint64_value_tag:
+            case cr_ParameterValue_int64_value_tag:
                 if (param_desc[i].desc.int64_desc.has_default_value)
-                    sCr_param_val[i].value.sint64_value = param_desc[i].desc.int64_desc.default_value;
+                    sCr_param_val[i].value.int64_value = param_desc[i].desc.int64_desc.default_value;
                 break;
             case cr_ParameterValue_float64_value_tag:
                 if (param_desc[i].desc.float64_desc.has_default_value)
@@ -301,7 +301,7 @@ int app_handle_param_repo_read(cr_ParameterValue *data)
             data->value.bytes_value.size = sizeof(ble_id.a.val);
             break;
         case PARAM_UPTIME:
-            data->value.sint64_value = k_uptime_get();
+            data->value.int64_value = k_uptime_get();
             break;
         case PARAM_BUTTON_PRESSED:
             data->value.bool_value = main_get_button_pressed();
@@ -424,11 +424,11 @@ int crcb_time_get(cr_TimeGetResponse *response)
     response->has_timezone = sCr_param_val[PARAM_TIMEZONE_ENABLED].value.bool_value;
     if (!response->has_timezone)
     {
-        response->seconds_utc += sCr_param_val[PARAM_TIMEZONE_OFFSET].value.sint32_value;
+        response->seconds_utc += sCr_param_val[PARAM_TIMEZONE_OFFSET].value.int32_value;
     }
     else
     {
-        response->timezone = sCr_param_val[PARAM_TIMEZONE_OFFSET].value.sint32_value;
+        response->timezone = sCr_param_val[PARAM_TIMEZONE_OFFSET].value.int32_value;
     }
     return 0;
 }
@@ -441,9 +441,9 @@ int crcb_time_set(const cr_TimeSetRequest *request)
     {
         cr_ParameterValue param;
         param.parameter_id = PARAM_TIMEZONE_OFFSET;
-        param.which_value = cr_ParameterValue_sint32_value_tag;
+        param.which_value = cr_ParameterValue_int32_value_tag;
         param.timestamp = (uint32_t) k_uptime_get();
-        param.value.sint32_value = request->timezone;
+        param.value.int32_value = request->timezone;
         crcb_parameter_write(PARAM_TIMEZONE_OFFSET, &param);
     }
     return 0;
