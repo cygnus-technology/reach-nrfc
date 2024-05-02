@@ -31,6 +31,9 @@
 // A custom hash function to only look at NVM parameters, to avoid invalidating the PR file when only non-NVM parameters change
 static uint32_t calculate_nvm_hash(void);
 
+// strnlen is technically a Linux function and is often not found by the compiler.
+size_t strnlen( const char * s,size_t maxlen );
+
 static bool pr_file_access_failed = false;
 static bool pr_file_exists = false;
 static struct fs_file_t pr_file;
