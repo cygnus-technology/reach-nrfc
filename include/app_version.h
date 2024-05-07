@@ -12,7 +12,7 @@
 #define APP_PATCH_VERSION 0
 
 // appends a note string to the version
-#define DEV_BUILD
+// #define DEV_BUILD
 
 extern void print_versions();
 extern const char *get_app_version();
