@@ -1,18 +1,69 @@
 /********************************************************************************************
+ *    _ ____  ___             _         _     ___              _                        _
+ *   (_)__ / | _ \_ _ ___  __| |_  _ __| |_  |   \ _____ _____| |___ _ __ _ __  ___ _ _| |_
+ *   | ||_ \ |  _/ '_/ _ \/ _` | || / _|  _| | |) / -_) V / -_) / _ \ '_ \ '  \/ -_) ' \  _|
+ *   |_|___/ |_| |_| \___/\__,_|\_,_\__|\__| |___/\___|\_/\___|_\___/ .__/_|_|_\___|_||_\__|
+ *                                                                  |_|
+ *                           -----------------------------------
+ *                          Copyright i3 Product Development 2024
  *
- * \date   2024
+ * MIT License
  *
- * \author i3 Product Development (JNP)
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * \brief  Functions to handle executing Reach commands
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * \brief A minimal implementation of command discovery and handling
+ *
+ * Original Author: Chuck Peplinski
+ * Script Authors: Joseph Peplinski and Andrew Carlson
+ *
+ * Generated with version 1.0.0 of the C code generator
  *
  ********************************************************************************************/
 
-#include <zephyr/kernel.h>
+/********************************************************************************************
+ ************************************     Includes     *************************************
+ *******************************************************************************************/
 
+#include "commands.h"
+#include <stdint.h>
 #include "cr_stack.h"
-#include "definitions.h"
 #include "i3_log.h"
+
+/* User code start [commands.c: User Includes] */
+
+#include <zephyr/kernel.h>
+#include "parameters.h"
+
+/* User code end [commands.c: User Includes] */
+
+/********************************************************************************************
+ *************************************     Defines     **************************************
+ *******************************************************************************************/
+
+/* User code start [commands.c: User Defines] */
+/* User code end [commands.c: User Defines] */
+
+/********************************************************************************************
+ ***********************************     Data Types     ************************************
+ *******************************************************************************************/
+
+/* User code start [commands.c: User Data Types] */
 
 typedef enum
 {
@@ -22,21 +73,166 @@ typedef enum
   SEQUENCE_INACTIVE = 0xFF
 } sequence_t;
 
+/* User code end [commands.c: User Data Types] */
+
+/********************************************************************************************
+ ********************************     Global Variables     *********************************
+ *******************************************************************************************/
+
+/* User code start [commands.c: User Global Variables] */
+/* User code end [commands.c: User Global Variables] */
+
+/********************************************************************************************
+ *****************************     Local/Extern Variables     ******************************
+ *******************************************************************************************/
+
+static int sCommandIndex = 0;
+static const cr_CommandInfo command_desc[] = {
+    {
+        .id = COMMAND_PRESET_NOTIFICATIONS_ON,
+        .name = "Preset Notifications On",
+        .has_description = true,
+        .description = "Also done when connecting"
+    },
+    {
+        .id = COMMAND_CLEAR_NOTIFICATIONS,
+        .name = "Clear Notifications",
+        .has_description = true,
+        .description = "Disable all notifications"
+    },
+    {
+        .id = COMMAND_REBOOT,
+        .name = "Reboot",
+        .has_description = true,
+        .description = "Reboots immediately"
+    },
+    {
+        .id = COMMAND_RESET_DEFAULTS,
+        .name = "Reset Defaults",
+        .has_description = true,
+        .description = "Resets user params and io.txt"
+    },
+    {
+        .id = COMMAND_INVALIDATE_OTA_IMAGE,
+        .name = "Invalidate OTA Image",
+        .has_description = true,
+        .description = "Erases the OTA magic number",
+        .has_timeout = true,
+        .timeout = 5
+    },
+    {
+        .id = COMMAND_CLICK_FOR_WISDOM,
+        .name = "Click for Wisdom",
+        .has_description = true,
+        .description = "Press it and find out"
+    }
+};
+
+/* User code start [commands.c: User Local/Extern Variables] */
+
 static uint32_t times_clicked = 0;
 static uint8_t sequence_position = 0;
 static sequence_t active_sequence = SEQUENCE_INACTIVE;
+
+/* User code end [commands.c: User Local/Extern Variables] */
+
+/********************************************************************************************
+ ***************************     Local Function Declarations     ****************************
+ *******************************************************************************************/
+
+/* User code start [commands.c: User Local Function Declarations] */
+/* User code end [commands.c: User Local Function Declarations] */
+
+/********************************************************************************************
+ ********************************     Global Functions     *********************************
+ *******************************************************************************************/
+
+/* User code start [commands.c: User Global Functions] */
+/* User code end [commands.c: User Global Functions] */
+
+/********************************************************************************************
+ *************************     Cygnus Reach Callback Functions     **************************
+ *******************************************************************************************/
+
+int crcb_get_command_count()
+{
+    int i;
+    int numAvailable = 0;
+    for (i=0; i<NUM_COMMANDS; i++)
+    {
+        if (crcb_access_granted(cr_ServiceIds_COMMANDS, command_desc[i].id))
+            numAvailable++;
+    }
+    return numAvailable;
+}
+
+int crcb_command_discover_next(cr_CommandInfo *cmd_desc)
+{
+    if (sCommandIndex >= NUM_COMMANDS)
+    {
+        I3_LOG(LOG_MASK_REACH, "%s: Command index %d indicates discovery complete.", __FUNCTION__, sCommandIndex);
+        return cr_ErrorCodes_NO_DATA;
+    }
+
+    while (!crcb_access_granted(cr_ServiceIds_COMMANDS, command_desc[sCommandIndex].id))
+    {
+        I3_LOG(LOG_MASK_FILES, "%s: sCommandIndex (%d) skip, access not granted", __FUNCTION__, sCommandIndex);
+        sCommandIndex++;
+        if (sCommandIndex >= NUM_COMMANDS)
+        {
+            I3_LOG(LOG_MASK_PARAMS, "%s: skipped to sCommandIndex (%d) >= NUM_COMMANDS (%d)", __FUNCTION__, sCommandIndex, NUM_COMMANDS);
+            return cr_ErrorCodes_NO_DATA;
+        }
+    }
+    *cmd_desc = command_desc[sCommandIndex++];
+    return 0;
+}
+
+int crcb_command_discover_reset(const uint32_t cid)
+{
+    if (cid >= NUM_COMMANDS)
+    {
+        i3_log(LOG_MASK_ERROR, "%s: Command ID %d does not exist.", __FUNCTION__, cid);
+        return cr_ErrorCodes_INVALID_ID;
+    }
+
+    for (sCommandIndex = 0; sCommandIndex < NUM_COMMANDS; sCommandIndex++)
+    {
+        if (command_desc[sCommandIndex].id == cid) {
+            if (!crcb_access_granted(cr_ServiceIds_COMMANDS, command_desc[sCommandIndex].id))
+            {
+                sCommandIndex = 0;
+                break;
+            }
+            I3_LOG(LOG_MASK_PARAMS, "discover command reset (%d) reset to %d", cid, sCommandIndex);
+            return 0;
+        }
+    }
+    sCommandIndex = crcb_get_command_count();
+    I3_LOG(LOG_MASK_PARAMS, "discover command reset (%d) reset defaults to %d", cid, sCommandIndex);
+    return cr_ErrorCodes_INVALID_ID;
+}
 
 int crcb_command_execute(const uint8_t cid)
 {
     int rval = 0;
     switch (cid)
     {
+        /* User code start [Commands: Command Handler] */
+
+        case COMMAND_PRESET_NOTIFICATIONS_ON:
+            cr_init_param_notifications();
+            I3_LOG(LOG_MASK_ALWAYS, "Enabled default notifications.");
+            break;
+        case COMMAND_CLEAR_NOTIFICATIONS:
+            cr_clear_param_notifications();
+            I3_LOG(LOG_MASK_ALWAYS, "Cleared all notifications.");
+            break;
         case COMMAND_REBOOT:
             NVIC_SystemReset();
             break;
         case COMMAND_RESET_DEFAULTS:
-            extern int param_repo_reset_nvm(void);
-            rval = param_repo_reset_nvm();
+            rval = parameters_reset_nvm();
             if (rval != 0)
             {
                 extern void files_reset(void);
@@ -172,14 +368,24 @@ int crcb_command_execute(const uint8_t cid)
             times_clicked++;
             break;
         }
+
+        /* User code end [Commands: Command Handler] */
         default:
-            // Unsupported command
-            return cr_ErrorCodes_INVALID_PARAMETER;
+            rval = cr_ErrorCodes_INVALID_ID;
+            break;
     }
-    if (rval)
-    {
-        i3_log(LOG_MASK_ERROR, "Failed to execute command %u, error %d", cid, rval);
-        rval = cr_ErrorCodes_NO_DATA;
-    }
+    /* User code start [Commands: Command Handler Post-Switch] */
+    /* User code end [Commands: Command Handler Post-Switch] */
     return rval;
 }
+
+/* User code start [commands.c: User Cygnus Reach Callback Functions] */
+/* User code end [commands.c: User Cygnus Reach Callback Functions] */
+
+/********************************************************************************************
+ *********************************     Local Functions     **********************************
+ *******************************************************************************************/
+
+/* User code start [commands.c: User Local Functions] */
+/* User code end [commands.c: User Local Functions] */
+

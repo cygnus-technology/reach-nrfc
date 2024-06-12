@@ -1,12 +1,50 @@
 /********************************************************************************************
+ *    _ ____  ___             _         _     ___              _                        _
+ *   (_)__ / | _ \_ _ ___  __| |_  _ __| |_  |   \ _____ _____| |___ _ __ _ __  ___ _ _| |_
+ *   | ||_ \ |  _/ '_/ _ \/ _` | || / _|  _| | |) / -_) V / -_) / _ \ '_ \ '  \/ -_) ' \  _|
+ *   |_|___/ |_| |_| \___/\__,_|\_,_\__|\__| |___/\___|\_/\___|_\___/ .__/_|_|_\___|_||_\__|
+ *                                                                  |_|
+ *                           -----------------------------------
+ *                          Copyright i3 Product Development 2024
  *
- * \date   2023
+ * MIT License
  *
- * \author i3 Product Development (JNP)
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * \brief  Functions to handle the Reach CLI service
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * \brief A minimal command-line interface implementation
+ *
+ * Original Author: Chuck Peplinski
+ * Script Authors: Joseph Peplinski and Andrew Carlson
+ *
+ * Generated with version 1.0.0 of the C code generator
  *
  ********************************************************************************************/
+
+/********************************************************************************************
+ ************************************     Includes     *************************************
+ *******************************************************************************************/
+
+#include "cli.h"
+#include "cr_stack.h"
+#include "i3_log.h"
+
+/* User code start [cli.c: User Includes] */
 
 #include <zephyr/kernel.h>
 #include <zephyr/bluetooth/bluetooth.h>
@@ -14,37 +52,80 @@
 #include <zephyr/fs/fs.h>
 #include <ncs_version.h>
 
-#include "reach-server.h"
-#include "cr_stack.h"
-#include "i3_log.h"
 #include "app_version.h"
 #include "main.h"
 
-#define TEXT_CLI ""
+/* User code end [cli.c: User Includes] */
+
+/********************************************************************************************
+ *************************************     Defines     **************************************
+ *******************************************************************************************/
+
+/* User code start [cli.c: User Defines] */
 
 #define CLI_TASK_STACK_SIZE 2048
 #define CLI_TASK_PRIORITY 5
 
-#define TOSTRING_LAYER_ONE(x) #x
-#define TOSTRING(x) TOSTRING_LAYER_ONE(x)
+/* User code end [cli.c: User Defines] */
 
-static void cli_task(void *arg, void *param2, void *param3);
+/********************************************************************************************
+ ***********************************     Data Types     ************************************
+ *******************************************************************************************/
+
+/* User code start [cli.c: User Data Types] */
+/* User code end [cli.c: User Data Types] */
+
+/********************************************************************************************
+ ********************************     Global Variables     *********************************
+ *******************************************************************************************/
+
+/* User code start [cli.c: User Global Variables] */
+/* User code end [cli.c: User Global Variables] */
+
+/********************************************************************************************
+ *****************************     Local/Extern Variables     ******************************
+ *******************************************************************************************/
+
+static char input[64];
+static uint8_t input_length = 0;
+
+/* User code start [cli.c: User Local/Extern Variables] */
 
 K_THREAD_STACK_DEFINE(cli_task_stack_area, CLI_TASK_STACK_SIZE);
 struct k_thread cli_task_data;
 k_tid_t cli_task_id;
+static const struct device *uart_dev = DEVICE_DT_GET_ONE(zephyr_cdc_acm_uart);
 
-#ifdef DEV_BUILD
-static const char sAppVersion[] = TOSTRING(APP_MAJOR_VERSION) "." TOSTRING(APP_MINOR_VERSION) "." TOSTRING(APP_PATCH_VERSION) "-dev";
-#else
-static const char sAppVersion[] = TOSTRING(APP_MAJOR_VERSION) "." TOSTRING(APP_MINOR_VERSION) "." TOSTRING(APP_PATCH_VERSION);
-#endif
+/* User code end [cli.c: User Local/Extern Variables] */
 
+/********************************************************************************************
+ ***************************     Local Function Declarations     ****************************
+ *******************************************************************************************/
+
+static void cli_write_prompt(void);
+static void cli_write(char *text);
+static void cli_write_char(char c);
+static bool cli_read_char(char *received);
+
+/* User code start [cli.c: User Local Function Declarations] */
+
+static void cli_task(void *arg, void *param2, void *param3);
+static void print_versions(void);
 static void slash(void);
 static void lm(const char *input);
 
+/* User code end [cli.c: User Local Function Declarations] */
+
+/********************************************************************************************
+ ********************************     Global Functions     *********************************
+ *******************************************************************************************/
+
 void cli_init(void)
 {
+    /* User code start [CLI: Init] */
+
+    cli_write("\033[2J\033[H");
+    print_versions();
     cli_task_id = k_thread_create(
         &cli_task_data, cli_task_stack_area,
         K_THREAD_STACK_SIZEOF(cli_task_stack_area),
@@ -53,82 +134,65 @@ void cli_init(void)
         CLI_TASK_PRIORITY,
         K_FP_REGS,
         K_NO_WAIT);
+
+    /* User code end [CLI: Init] */
+    cli_write_prompt();
 }
 
-static void cli_task(void *arg, void *param2, void *param3)
+bool cli_poll(void)
 {
-    char input[64];
-    uint8_t input_length = 0;
-    const struct device *uart_dev = DEVICE_DT_GET_ONE(zephyr_cdc_acm_uart);
-    char clear_screen[] = "\033[2J\033]H";
-    for (int i = 0; i < sizeof(clear_screen); i++)
-        uart_poll_out(uart_dev, clear_screen[i]);
-    print_versions();
-    uart_poll_out(uart_dev, '>');
-    while (1)
+    if (input_length == sizeof(input))
     {
-        if (input_length == sizeof(input))
-        {
-            i3_log(LOG_MASK_WARN, "CLI input too long, clearing");
-            memset(input, 0, sizeof(input));
-            input_length = 0;
-        }
-        if (!uart_poll_in(uart_dev, &input[input_length]))
-        {
-            switch (input[input_length])
-            {
-                case '\r':
-                    uart_poll_out(uart_dev, '\r');
-                    uart_poll_out(uart_dev, '\n');
-                    if (input_length == 0)
-                    {
-                        uart_poll_out(uart_dev, '>');
-                        break; // No data, no need to call anything
-                    }
-                    input[input_length] = 0; // Null-terminate the string
-                    crcb_cli_enter((const char *) input);
-                    input_length = 0;
-                    memset(input, 0, sizeof(input));
-                    uart_poll_out(uart_dev, '>');
-                    break;
-                case '\n':
-                    break; // Ignore, only expect '\r' for command execution
-                case '\b':
-                    // Received a backspace
-                    if (input_length > 0)
-                    {
-                        input[--input_length] = 0;
-                        uart_poll_out(uart_dev, '\b');
-                        uart_poll_out(uart_dev, ' ');
-                        uart_poll_out(uart_dev, '\b');
-                    }
-                    break;
-                default:
-                    // Still waiting for an input
-                    uart_poll_out(uart_dev, input[input_length]);
-                    if (input_length < sizeof(input))
-                        input_length++;
-                    break;
-            }
-        }
-        k_msleep(10);
+        i3_log(LOG_MASK_WARN, "CLI input too long, clearing");
+        memset(input, 0, sizeof(input));
+        input_length = 0;
+        cli_write_prompt();
     }
-
+    if (cli_read_char(&input[input_length]))
+    {
+        switch (input[input_length])
+        {
+            case '\r':
+                cli_write("\r\n");
+                if (input_length == 0)
+                {
+                    cli_write_prompt();
+                    break; // No data, no need to call anything
+                }
+                input[input_length] = 0; // Null-terminate the string
+                crcb_cli_enter((const char*) input);
+                input_length = 0;
+                memset(input, 0, sizeof(input));
+                cli_write_prompt();
+                break;
+            case '\n':
+                break; // Ignore, only expect '\r' for command execution
+            case '\b':
+                // Received a backspace
+                if (input_length > 0)
+                {
+                    input[--input_length] = 0;
+                    cli_write("\b \b");
+                }
+                break;
+            default:
+                // Still waiting for an input
+                cli_write_char(input[input_length]);
+                if (input_length < sizeof(input))
+                    input_length++;
+                break;
+        }
+    return true;
+    }
+    return false;
 }
 
-const char *get_app_version()
-{
-    return sAppVersion;
-}
+/* User code start [cli.c: User Global Functions] */
+/* User code end [cli.c: User Global Functions] */
 
-void print_versions(void)
-{
-    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Reach nRF52840 Dongle demo, built %s, %s", __DATE__, __TIME__);
-    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  nRF Connect SDK version %s", NCS_VERSION_STRING);
-    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  Reach stack version %s", cr_get_reach_version());
-    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  Reach protobuf version %s", cr_get_proto_version());
-    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  App version %s", get_app_version());
-}
+/********************************************************************************************
+ *************************     Cygnus Reach Callback Functions     **************************
+ *******************************************************************************************/
 
 int crcb_cli_enter(const char *ins)
 {
@@ -137,28 +201,120 @@ int crcb_cli_enter(const char *ins)
         return 0;
     }
 
-    if ((*ins == '?') || (!strncmp("help", ins, 4)) )
-    {
-        i3_log(LOG_MASK_ALWAYS, TEXT_GREEN "!!! Reach nRF52840 Dongle demo, built %s, %s", __DATE__, __TIME__);
-        i3_log(LOG_MASK_ALWAYS, TEXT_GREEN "!!! App Version %s", get_app_version());
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Commands:");
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  ver : Print versions");
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  /   : Display status");
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  lm (<new log mask>): Print current log mask, or set a new log mask");
+    if ((*ins == '?') || (!strncmp("help", ins, 4)))
+        {
+        i3_log(LOG_MASK_ALWAYS, "  ver: Print versions");
+        i3_log(LOG_MASK_ALWAYS, "  /: Display status");
+        i3_log(LOG_MASK_ALWAYS, "  lm (<new log mask>): Print current log mask, or set a new log mask");
+        /* User code start [CLI: Custom help handling] */
+        /* User code end [CLI: Custom help handling] */
         return 0;
     }
 
     crcb_set_command_line(ins);
     // step through remote_command_table and execute if matching
     if (!strncmp("ver", ins, 3))
+    {
+        /* User code start [CLI: 'ver' handler] */
+
         print_versions();
+
+        /* User code end [CLI: 'ver' handler] */
+    }
     else if (!strncmp("/", ins, 1))
+    {
+        /* User code start [CLI: '/' handler] */
+
         slash();
+
+        /* User code end [CLI: '/' handler] */
+    }
     else if (!strncmp("lm", ins, 2))
+    {
+        /* User code start [CLI: 'lm' handler] */
+
         lm(ins);
+
+        /* User code end [CLI: 'lm' handler] */
+    }
+    /* User code start [CLI: Custom command handling] */
+    /* User code end [CLI: Custom command handling] */
     else
         i3_log(LOG_MASK_WARN, "CLI command '%s' not recognized.", ins, *ins);
     return 0;
+}
+
+/* User code start [cli.c: User Cygnus Reach Callback Functions] */
+/* User code end [cli.c: User Cygnus Reach Callback Functions] */
+
+/********************************************************************************************
+ *********************************     Local Functions     **********************************
+ *******************************************************************************************/
+
+static void cli_write_prompt(void)
+{
+    /* User code start [CLI: Write Prompt]
+     * This is called after a command is sent and processed, indicating that the CLI is ready for a new prompt.
+     * A typical implementation of this is to send a single '>' character. */
+
+    cli_write_char('>');
+
+    /* User code end [CLI: Write Prompt] */
+}
+
+static void cli_write(char *text)
+{
+    /* User code start [CLI: Write]
+     * This is where other output sources should be handled (for example, writing to a UART port)
+     * This is called for outputs which are not necessary via BLE, such as clearing lines or handling backspaces */
+
+    int i = 0;
+    while (text[i] != 0)
+        uart_poll_out(uart_dev, text[i++]);
+
+    /* User code end [CLI: Write] */
+}
+
+static void cli_write_char(char c)
+{
+    /* User code start [CLI: Write Char]
+     * This is used to write single characters, which may be handled differently from longer strings. */
+
+    uart_poll_out(uart_dev, c);
+
+    /* User code end [CLI: Write Char] */
+}
+
+static bool cli_read_char(char *received)
+{
+    /* User code start [CLI: Read]
+     * This is where other input sources (such as a UART) should be handled.
+     * This should be non-blocking, and return true if a character was received, or false if not. */
+
+    return (uart_poll_in(uart_dev, (unsigned char *) received) == 0);
+
+    /* User code end [CLI: Read] */
+}
+
+/* User code start [cli.c: User Local Functions] */
+
+static void cli_task(void *arg, void *param2, void *param3)
+{
+    while (1)
+    {
+        cli_poll();
+        k_msleep(10);
+    }
+
+}
+
+static void print_versions(void)
+{
+    i3_log(LOG_MASK_ALWAYS, "Reach nRF52840 Dongle demo, built %s, %s", __DATE__, __TIME__);
+    i3_log(LOG_MASK_ALWAYS, "  nRF Connect SDK version %s", NCS_VERSION_STRING);
+    i3_log(LOG_MASK_ALWAYS, "  Reach stack version %s", cr_get_reach_version());
+    i3_log(LOG_MASK_ALWAYS, "  Reach protobuf version %s", cr_get_proto_version());
+    i3_log(LOG_MASK_ALWAYS, "  App version %s", get_app_version());
 }
 
 static void slash(void)
@@ -167,29 +323,29 @@ static void slash(void)
     struct fs_statvfs fs_stats;
     int rval = fs_statvfs("/lfs", &fs_stats);
     if (rval)
-        i3_log(LOG_MASK_ERROR, TEXT_CLI "Failed to get file system stats, error %d", rval);
+        i3_log(LOG_MASK_ERROR, "Failed to get file system stats, error %d", rval);
     else
     {
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "File system: %u/%u blocks (%u bytes each) remaining", fs_stats.f_bfree, fs_stats.f_blocks, fs_stats.f_frsize);
+        i3_log(LOG_MASK_ALWAYS, "File system: %u/%u blocks (%u bytes each) remaining", fs_stats.f_bfree, fs_stats.f_blocks, fs_stats.f_frsize);
     }
 
     // System information
     bt_addr_le_t ble_id;
     size_t id_count = 1;
     bt_id_get(&ble_id, &id_count);
-    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "BLE Device Address: %02X:%02X:%02X:%02X:%02X:%02X",
+    i3_log(LOG_MASK_ALWAYS, "BLE Device Address: %02X:%02X:%02X:%02X:%02X:%02X",
         ble_id.a.val[5], ble_id.a.val[4], ble_id.a.val[3], ble_id.a.val[2], ble_id.a.val[1], ble_id.a.val[0]);
-    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Uptime: %.3f seconds", ((float) k_uptime_get()) / 1000);
+    i3_log(LOG_MASK_ALWAYS, "Uptime: %.3f seconds", ((float) k_uptime_get()) / 1000);
 
     // Reach information
-    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Current log mask: 0x%x", i3_log_get_mask());
+    i3_log(LOG_MASK_ALWAYS, "Current log mask: 0x%x", i3_log_get_mask());
   #ifdef ENABLE_REMOTE_CLI
     if (i3_log_get_remote_cli_enable())
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Remote CLI support enabled.");
+        i3_log(LOG_MASK_ALWAYS, "Remote CLI support enabled.");
     else
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Remote CLI support built but not enabled.");
+        i3_log(LOG_MASK_ALWAYS, "Remote CLI support built but not enabled.");
   #else
-    i3_log(LOG_MASK_ALWAYS, TEXT_CLI "!!! Remote CLI NOT support built in.");
+    i3_log(LOG_MASK_ALWAYS, "!!! Remote CLI NOT support built in.");
   #endif
 }
 
@@ -201,40 +357,43 @@ static void lm(const char *input)
     {
         lm = i3_log_get_mask();
         // Print current log mask
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "Current log mask: 0x%x", lm);
+        i3_log(LOG_MASK_ALWAYS, "Current log mask: 0x%x", lm);
 #ifndef NO_REACH_LOGGING
         // print information about log mask
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  ALWAYS, ERROR and WARN are enabled");
-        if (lm & LOG_MASK_WEAK) i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  mask 0x%x: WEAK is enabled", LOG_MASK_WEAK);
-        else i3_log(LOG_MASK_ALWAYS, TEXT_CLI "    mask 0x%x: WEAK is disabled", LOG_MASK_WEAK);
-        if (lm & LOG_MASK_WIRE) i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  mask 0x%x: WIRE is enabled", LOG_MASK_WIRE);
-        else i3_log(LOG_MASK_ALWAYS, TEXT_CLI "    mask 0x%x: WIRE is disabled", LOG_MASK_WIRE);
-        if (lm & LOG_MASK_REACH) i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  mask 0x%x: REACH is enabled", LOG_MASK_REACH);
-        else i3_log(LOG_MASK_ALWAYS, TEXT_CLI "    mask 0x%x: REACH is disabled", LOG_MASK_REACH);
-        if (lm & LOG_MASK_PARAMS) i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  mask 0x%x: PARAMS is enabled", LOG_MASK_PARAMS);
-        else i3_log(LOG_MASK_ALWAYS, TEXT_CLI "    mask 0x%x: PARAMS is disabled", LOG_MASK_PARAMS);
-        if (lm & LOG_MASK_FILES) i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  mask 0x%x: FILES is enabled", LOG_MASK_FILES);
-        else i3_log(LOG_MASK_ALWAYS, TEXT_CLI "    mask 0x%x: FILES is disabled", LOG_MASK_FILES);
-        if (lm & LOG_MASK_BLE) i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  mask 0x%x: BLE is enabled", LOG_MASK_BLE);
-        else i3_log(LOG_MASK_ALWAYS, TEXT_CLI "    mask 0x%x: BLE is disabled", LOG_MASK_BLE);
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "  Other Valid log masks:");
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "    LOG_MASK_ACME               0x4000");
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "    LOG_MASK_DEBUG              0x8000");
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "    LOG_MASK_TIMEOUT           0x10000");
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "    LOG_MASK_DATASTREAM_DEBUG 0x100000");
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "    LOG_MASK_ZIGBEE_DEBUG     0x200000");
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "    LOG_MASK_ZIGBEE_OTA_DEBUG 0x400000");
+        i3_log(LOG_MASK_ALWAYS, "  ALWAYS, ERROR and WARN are enabled");
+        if (lm & LOG_MASK_WEAK) i3_log(LOG_MASK_ALWAYS, "  mask 0x%x: WEAK is enabled", LOG_MASK_WEAK);
+        else i3_log(LOG_MASK_ALWAYS, "    mask 0x%x: WEAK is disabled", LOG_MASK_WEAK);
+        if (lm & LOG_MASK_WIRE) i3_log(LOG_MASK_ALWAYS, "  mask 0x%x: WIRE is enabled", LOG_MASK_WIRE);
+        else i3_log(LOG_MASK_ALWAYS, "    mask 0x%x: WIRE is disabled", LOG_MASK_WIRE);
+        if (lm & LOG_MASK_REACH) i3_log(LOG_MASK_ALWAYS, "  mask 0x%x: REACH is enabled", LOG_MASK_REACH);
+        else i3_log(LOG_MASK_ALWAYS, "    mask 0x%x: REACH is disabled", LOG_MASK_REACH);
+        if (lm & LOG_MASK_PARAMS) i3_log(LOG_MASK_ALWAYS, "  mask 0x%x: PARAMS is enabled", LOG_MASK_PARAMS);
+        else i3_log(LOG_MASK_ALWAYS, "    mask 0x%x: PARAMS is disabled", LOG_MASK_PARAMS);
+        if (lm & LOG_MASK_FILES) i3_log(LOG_MASK_ALWAYS, "  mask 0x%x: FILES is enabled", LOG_MASK_FILES);
+        else i3_log(LOG_MASK_ALWAYS, "    mask 0x%x: FILES is disabled", LOG_MASK_FILES);
+        if (lm & LOG_MASK_BLE) i3_log(LOG_MASK_ALWAYS, "  mask 0x%x: BLE is enabled", LOG_MASK_BLE);
+        else i3_log(LOG_MASK_ALWAYS, "    mask 0x%x: BLE is disabled", LOG_MASK_BLE);
+        i3_log(LOG_MASK_ALWAYS, "  Other Valid log masks:");
+        i3_log(LOG_MASK_ALWAYS, "    LOG_MASK_ACME               0x4000");
+        i3_log(LOG_MASK_ALWAYS, "    LOG_MASK_DEBUG              0x8000");
+        i3_log(LOG_MASK_ALWAYS, "    LOG_MASK_TIMEOUT           0x10000");
+        i3_log(LOG_MASK_ALWAYS, "    LOG_MASK_DATASTREAM_DEBUG 0x100000");
+        i3_log(LOG_MASK_ALWAYS, "    LOG_MASK_ZIGBEE_DEBUG     0x200000");
+        i3_log(LOG_MASK_ALWAYS, "    LOG_MASK_ZIGBEE_OTA_DEBUG 0x400000");
 #else
         // Logging is typically disabled to save space, so don't waste it with a bunch of printouts
-        i3_log(LOG_MASK_WARN, TEXT_CLI "Log mask is of limited use, as logging is disabled");
+        i3_log(LOG_MASK_WARN, "Log mask is of limited use, as logging is disabled");
 #endif
     }
     else
     {
         i3_log_set_mask(lm);
-        i3_log(LOG_MASK_ALWAYS, TEXT_CLI "The log mask is now 0x%x", lm);
+        i3_log(LOG_MASK_ALWAYS, "The log mask is now 0x%x", lm);
 #ifdef NO_REACH_LOGGING
-        i3_log(LOG_MASK_WARN, TEXT_CLI "Log mask is of limited use, as logging is disabled");
+        i3_log(LOG_MASK_WARN, "Log mask is of limited use, as logging is disabled");
 #endif
     }
 }
+
+/* User code end [cli.c: User Local Functions] */
+

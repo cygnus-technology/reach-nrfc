@@ -36,7 +36,8 @@
 #ifndef _REACH_SERVER_H_
 #define _REACH_SERVER_H_
 
-#include "definitions.h"
+#include "device.h"
+#include "parameters.h"
 
 // A range of parameters are driven by the 244 byte packet size imposed by BLE.
 

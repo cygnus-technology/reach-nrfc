@@ -23,7 +23,9 @@
 #include "i3_log.h"
 
 #include "reach_nrf_connect.h"
-#include "definitions.h"
+#include "cli.h"
+#include "files.h"
+#include "parameters.h"
 
 static int littlefs_flash_erase(unsigned int id);
 static int littlefs_mount(struct fs_mount_t *mp);
@@ -89,15 +91,9 @@ int main(void)
 
 	dk_button_handler_add(&button);
 
-	extern void init_param_repo();
-	init_param_repo();
-
-	extern void files_init(void);
+	parameters_init();
 	files_init();
-
-	extern void cli_init(void);
 	cli_init();
-
 	rnrfc_init();
 
 	main_set_rgb_led_state(RGB_LED_COLOR_GREEN);
@@ -142,9 +138,9 @@ uint8_t main_get_rgb_led_state(void)
 void main_set_rgb_led_state(uint8_t state)
 {
 	rgb_led_state = state;
-	dk_set_led(1, (state & RGB_LED_STATE_BIT_RED) ? 1:0);
-	dk_set_led(2, (state & RGB_LED_STATE_BIT_GREEN) ? 1:0);
-	dk_set_led(3, (state & RGB_LED_STATE_BIT_BLUE) ? 1:0);
+	dk_set_led(1, (state & RGB_LED_STATE_RED) ? 1:0);
+	dk_set_led(2, (state & RGB_LED_STATE_GREEN) ? 1:0);
+	dk_set_led(3, (state & RGB_LED_STATE_BLUE) ? 1:0);
 }
 
 bool main_get_button_pressed(void)
@@ -206,6 +202,8 @@ static int littlefs_mount(struct fs_mount_t *mp)
 void rnrfc_app_handle_ble_connection(void)
 {
 	main_set_rgb_led_state(RGB_LED_COLOR_BLUE);
+	cr_set_comm_link_connected(true);
+	cr_init_param_notifications();
     return;
 }
 

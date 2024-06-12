@@ -1,0 +1,265 @@
+{
+	"name": "nRF52840 Dongle",
+	"manufacturer": "Nordic Semiconductor",
+	"description": "A demo of Reach features",
+	"services":
+	{
+		"parameterRepositoryService": {
+			"parameters": [
+				{
+					"name": "User Device Name",
+					"description": "The advertised BLE name",
+					"access": "Read/Write",
+					"storageLocation": "NVM",
+					"dataType": "string",
+					"maxSize": 29
+				},
+				{
+					"name": "Timezone Enabled",
+					"access": "Read/Write",
+					"storageLocation": "NVM",
+					"dataType": "boolean",
+					"defaultValue": true,
+					"defaultNotifications":
+					{
+						"minInterval": 1000,
+						"minDelta": 1
+					}
+				},
+				{
+					"name": "Timezone Offset",
+					"access": "Read/Write",
+					"storageLocation": "NVM",
+					"dataType": "int32",
+					"units": "seconds",
+					"defaultValue": 0,
+					"rangeMin": -43200,
+					"rangeMax": 43200,
+					"defaultNotifications":
+					{
+						"minInterval": 1000,
+						"minDelta": 1
+					}
+				},
+				{
+					"name": "BT Device Address",
+					"access": "Read",
+					"storageLocation": "RAM",
+					"dataType": "bytearray",
+					"maxSize": 6
+				},
+				{
+					"name": "Uptime",
+					"access": "Read",
+					"storageLocation": "RAM",
+					"dataType": "int64",
+					"units": "milliseconds",
+					"defaultNotifications":
+					{
+						"minInterval": 100,
+						"minDelta": 1
+					}
+				},
+				{
+					"name": "Button Pressed",
+					"access": "Read",
+					"storageLocation": "RAM",
+					"dataType": "boolean",
+					"defaultNotifications":
+					{
+						"minInterval": 100,
+						"minDelta": 1
+					}
+				},
+				{
+					"name": "Identify LED",
+					"access": "Read",
+					"storageLocation": "RAM",
+					"dataType": "boolean",
+					"labelName": "Identify LED",
+					"defaultNotifications":
+					{
+						"minInterval": 100,
+						"minDelta": 1
+					}
+				},
+				{
+					"name": "RGB LED State",
+					"description": "Reset on disconnection",
+					"access": "Read/Write",
+					"storageLocation": "RAM",
+					"dataType": "bitfield",
+					"bitsAvailable": 3,
+					"labelName": "RGB LED State",
+					"defaultNotifications":
+					{
+						"minInterval": 1000,
+						"minDelta": 1
+					}
+				},
+				{
+					"name": "RGB LED Color",
+					"description": "Reset on disconnection",
+					"access": "Read/Write",
+					"storageLocation": "RAM",
+					"dataType": "enumeration",
+					"rangeMin": 0,
+					"rangeMax": 7,
+					"labelName": "RGB LED Color",
+					"defaultNotifications":
+					{
+						"minInterval": 1000,
+						"minDelta": 1
+					}
+				},
+				{
+					"name": "Identify",
+					"description": "Turn on to blink the green LED",
+					"access": "Read/Write",
+					"storageLocation": "RAM",
+					"dataType": "boolean",
+					"defaultValue": false,
+					"defaultNotifications":
+					{
+						"minInterval": 1000,
+						"minDelta": 1
+					}
+				},
+				{
+					"name": "Identify Interval",
+					"access": "Read/Write",
+					"storageLocation": "NVM",
+					"dataType": "float32",
+					"rangeMin": 0.01,
+					"rangeMax": 60,
+					"defaultValue": 1
+				}
+			],
+			"extendedLabels": [
+				{
+					"name": "Identify LED",
+					"dataType": "boolean",
+					"falseLabel": "Off",
+					"trueLabel": "Illuminated"
+				},
+				{
+					"name": "RGB LED State",
+					"dataType": "bitfield",
+					"bitIndices": [
+						{
+							"label": "Red"
+						},
+						{
+							"label": "Green"
+						},
+						{
+							"label": "Blue"
+						}
+					]
+				},
+				{
+					"name": "RGB LED Color",
+					"dataType": "enumeration",
+					"enumValues": [
+						{
+							"label": "Off"
+						},
+						{
+							"label": "Red"
+						},
+						{
+							"label": "Green"
+						},
+						{
+							"label": "Yellow"
+						},
+						{
+							"label": "Blue"
+						},
+						{
+							"label": "Magenta"
+						},
+						{
+							"label": "Cyan"
+						},
+						{
+							"label": "White"
+						}
+					]
+				}
+			]
+		},
+		"fileService": {
+			"files": [
+				{
+					"name": "ota.bin",
+					"maxSize": 458240,
+					"access": "Write",
+					"storageLocation": "NVM",
+					"requireChecksum": false
+				},
+				{
+					"name": "io.txt",
+					"maxSize": 4096,
+					"access": "Read/Write",
+					"storageLocation": "NVM",
+					"requireChecksum": false
+				},
+				{
+					"name": "cygnus-reach-logo.png",
+					"maxSize": 17900,
+					"access": "Read",
+					"storageLocation": "NVM",
+					"requireChecksum": false
+				}
+			]
+		},
+		"commandService": {
+			"commands": [
+				{
+					"name": "Preset Notifications On",
+					"description": "Also done when connecting"
+				},
+				{
+					"name": "Clear Notifications",
+					"description": "Disable all notifications"
+				},
+				{
+					"name": "Reboot",
+					"description": "Reboots immediately"
+				},
+				{
+					"name": "Reset Defaults",
+					"description": "Resets user params and io.txt"
+				},
+				{
+					"name": "Invalidate OTA Image",
+					"description": "Erases the OTA magic number",
+					"timeout": 5
+				},
+				{
+					"name": "Click for Wisdom",
+					"description": "Press it and find out"
+				}
+			]
+		},
+		"cliService": {
+			"commands": [
+				{
+					"string": "ver",
+					"description": "Print versions"
+				},
+				{
+					"string": "/",
+					"description": "Display status"
+				},
+				{
+					"string": "lm",
+					"argDescription": "(<new log mask>)",
+					"description": "Print current log mask, or set a new log mask"
+				}
+			]
+		},
+		"timeService": {}
+	}
+}

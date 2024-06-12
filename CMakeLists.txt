@@ -22,11 +22,12 @@ target_sources(app PRIVATE
 	src/main.c
 	src/fs_utils.c
 	src/const_files.c
-	src/definitions.c
 	src/cli.c
 	src/commands.c
+	src/device.c
 	src/files.c
-	src/param_repo.c
+	src/parameters.c
+	src/time.c
 
 	reach-c-stack/src/cr_files.c
 	reach-c-stack/src/cr_params.c
