@@ -40,32 +40,29 @@
 #define _CLI_H_
 
 // Includes
-
 #include <stdbool.h>
+
 /* User code start [cli.h: User Includes] */
 /* User code end [cli.h: User Includes] */
-// Defines
 
+// Defines
 /* User code start [cli.h: User Defines] */
 /* User code end [cli.h: User Defines] */
-// Data Types
 
+// Data Types
 /* User code start [cli.h: User Data Types] */
 /* User code end [cli.h: User Data Types] */
-// Global Variables
 
+// Global Variables
 /* User code start [cli.h: User Global Variables] */
 /* User code end [cli.h: User Global Variables] */
+
 // Global Functions
-
 void cli_init(void);
-
-/**
- * Gets and processes data from the command line
- * @return True if CLI data was received during the poll (from sources other than BLE), or false otherwise.
- */
 bool cli_poll(void);
+
 /* User code start [cli.h: User Global Functions] */
 /* User code end [cli.h: User Global Functions] */
+
 
 #endif // _CLI_H_

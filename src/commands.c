@@ -37,7 +37,7 @@
  ********************************************************************************************/
 
 /********************************************************************************************
- ************************************     Includes     *************************************
+ *************************************     Includes     *************************************
  *******************************************************************************************/
 
 #include "commands.h"
@@ -46,10 +46,8 @@
 #include "i3_log.h"
 
 /* User code start [commands.c: User Includes] */
-
 #include <zephyr/kernel.h>
 #include "parameters.h"
-
 /* User code end [commands.c: User Includes] */
 
 /********************************************************************************************
@@ -60,11 +58,10 @@
 /* User code end [commands.c: User Defines] */
 
 /********************************************************************************************
- ***********************************     Data Types     ************************************
+ ************************************     Data Types     ************************************
  *******************************************************************************************/
 
 /* User code start [commands.c: User Data Types] */
-
 typedef enum
 {
   SEQUENCE_AUTOBIOGRAPHY,
@@ -72,18 +69,24 @@ typedef enum
   SEQUENCE_SAY_HELLO,
   SEQUENCE_INACTIVE = 0xFF
 } sequence_t;
-
 /* User code end [commands.c: User Data Types] */
 
 /********************************************************************************************
- ********************************     Global Variables     *********************************
+ *********************************     Global Variables     *********************************
  *******************************************************************************************/
 
 /* User code start [commands.c: User Global Variables] */
 /* User code end [commands.c: User Global Variables] */
 
 /********************************************************************************************
- *****************************     Local/Extern Variables     ******************************
+ ***************************     Local Function Declarations     ****************************
+ *******************************************************************************************/
+
+/* User code start [commands.c: User Local Function Declarations] */
+/* User code end [commands.c: User Local Function Declarations] */
+
+/********************************************************************************************
+ ******************************     Local/Extern Variables     ******************************
  *******************************************************************************************/
 
 static int sCommandIndex = 0;
@@ -129,22 +132,13 @@ static const cr_CommandInfo command_desc[] = {
 };
 
 /* User code start [commands.c: User Local/Extern Variables] */
-
 static uint32_t times_clicked = 0;
 static uint8_t sequence_position = 0;
 static sequence_t active_sequence = SEQUENCE_INACTIVE;
-
 /* User code end [commands.c: User Local/Extern Variables] */
 
 /********************************************************************************************
- ***************************     Local Function Declarations     ****************************
- *******************************************************************************************/
-
-/* User code start [commands.c: User Local Function Declarations] */
-/* User code end [commands.c: User Local Function Declarations] */
-
-/********************************************************************************************
- ********************************     Global Functions     *********************************
+ *********************************     Global Functions     *********************************
  *******************************************************************************************/
 
 /* User code start [commands.c: User Global Functions] */
@@ -219,7 +213,6 @@ int crcb_command_execute(const uint8_t cid)
     switch (cid)
     {
         /* User code start [Commands: Command Handler] */
-
         case COMMAND_PRESET_NOTIFICATIONS_ON:
             cr_init_param_notifications();
             I3_LOG(LOG_MASK_ALWAYS, "Enabled default notifications.");
@@ -368,7 +361,6 @@ int crcb_command_execute(const uint8_t cid)
             times_clicked++;
             break;
         }
-
         /* User code end [Commands: Command Handler] */
         default:
             rval = cr_ErrorCodes_INVALID_ID;

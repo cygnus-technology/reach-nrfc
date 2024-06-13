@@ -37,7 +37,7 @@
  ********************************************************************************************/
 
 /********************************************************************************************
- ************************************     Includes     *************************************
+ *************************************     Includes     *************************************
  *******************************************************************************************/
 
 #include "files.h"
@@ -45,7 +45,6 @@
 #include "i3_log.h"
 
 /* User code start [files.c: User Includes] */
-
 #include <zephyr/kernel.h>
 #include <zephyr/fs/fs.h>
 #include <zephyr/drivers/flash.h>
@@ -53,7 +52,6 @@
 
 #include "const_files.h"
 #include "fs_utils.h"
-
 /* User code end [files.c: User Includes] */
 
 /********************************************************************************************
@@ -61,23 +59,21 @@
  *******************************************************************************************/
 
 /* User code start [files.c: User Defines] */
-
 #define MAXIMUM_OTA_SIZE FLASH_AREA_SIZE(image_1)
 #define OTA_RAM_BLOCK_SIZE 4096
 #define IO_TXT_FILENAME "/lfs/io.txt"
 #define MAX_IO_TXT_LENGTH 2048
-
 /* User code end [files.c: User Defines] */
 
 /********************************************************************************************
- ***********************************     Data Types     ************************************
+ ************************************     Data Types     ************************************
  *******************************************************************************************/
 
 /* User code start [files.c: User Data Types] */
 /* User code end [files.c: User Data Types] */
 
 /********************************************************************************************
- ********************************     Global Variables     *********************************
+ *********************************     Global Variables     *********************************
  *******************************************************************************************/
 
 cr_FileInfo file_descriptions[] = {
@@ -114,40 +110,36 @@ cr_FileInfo file_descriptions[] = {
 /* User code end [files.c: User Global Variables] */
 
 /********************************************************************************************
- *****************************     Local/Extern Variables     ******************************
- *******************************************************************************************/
-
-static int sFid_index = 0;
-
-/* User code start [files.c: User Local/Extern Variables] */
-
-static uint8_t ota_ram[OTA_RAM_BLOCK_SIZE];
-static size_t ota_ram_start_offset = 0;
-static size_t ota_ram_size = 0;
-
-static char io_txt[MAX_IO_TXT_LENGTH];
-static size_t io_txt_size = 0;
-
-/* User code end [files.c: User Local/Extern Variables] */
-
-/********************************************************************************************
  ***************************     Local Function Declarations     ****************************
  *******************************************************************************************/
 
 static int sFindIndexFromFid(uint32_t fid, uint8_t *index);
 
 /* User code start [files.c: User Local Function Declarations] */
-
 static int ota_erase(void);
 static int ota_write(const uint8_t *data, size_t offset, size_t size);
 static int ota_flush_cache(void);
 static int ota_mark_valid(void);
 static int ota_write_helper(void);
-
 /* User code end [files.c: User Local Function Declarations] */
 
 /********************************************************************************************
- ********************************     Global Functions     *********************************
+ ******************************     Local/Extern Variables     ******************************
+ *******************************************************************************************/
+
+static int sFid_index = 0;
+
+/* User code start [files.c: User Local/Extern Variables] */
+static uint8_t ota_ram[OTA_RAM_BLOCK_SIZE];
+static size_t ota_ram_start_offset = 0;
+static size_t ota_ram_size = 0;
+
+static char io_txt[MAX_IO_TXT_LENGTH];
+static size_t io_txt_size = 0;
+/* User code end [files.c: User Local/Extern Variables] */
+
+/********************************************************************************************
+ *********************************     Global Functions     *********************************
  *******************************************************************************************/
 
 void files_init(void)
@@ -290,6 +282,11 @@ int crcb_file_discover_next(cr_FileInfo *file_desc)
     return 0;
 }
 
+// which file
+// offset, negative value specifies current location.
+// how many bytes to read
+// where the data goes
+// bytes actually read, negative for errors.
 int crcb_read_file(const uint32_t fid, const int offset, const size_t bytes_requested, uint8_t *pData, int *bytes_read)
 {
     int rval = 0;
@@ -385,6 +382,10 @@ int crcb_file_prepare_to_write(const uint32_t fid, const size_t offset, const si
     return 0;
 }
 
+// which file
+// offset, negative value specifies current location.
+// how many bytes to write
+// where to get the data from
 int crcb_write_file(const uint32_t fid, const int offset, const size_t bytes, const uint8_t *pData)
 {
     int rval = 0;
@@ -464,6 +465,7 @@ int crcb_file_transfer_complete(const uint32_t fid)
     return 0;
 }
 
+// returns zero or an error code
 int crcb_erase_file(const uint32_t fid)
 {
     int rval = 0;

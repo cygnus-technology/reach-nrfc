@@ -40,33 +40,35 @@
 #define _COMMANDS_H_
 
 // Includes
-
 /* User code start [commands.h: User Includes] */
 /* User code end [commands.h: User Includes] */
-// Defines
 
+// Defines
 #define NUM_COMMANDS 6
+
 /* User code start [commands.h: User Defines] */
 /* User code end [commands.h: User Defines] */
-// Data Types
 
+// Data Types
 typedef enum {
-    COMMAND_PRESET_NOTIFICATIONS_ON = 0,
-    COMMAND_CLEAR_NOTIFICATIONS     = 1,
-    COMMAND_REBOOT                  = 2,
-    COMMAND_RESET_DEFAULTS          = 3,
-    COMMAND_INVALIDATE_OTA_IMAGE    = 4,
-    COMMAND_CLICK_FOR_WISDOM        = 5,
+    COMMAND_PRESET_NOTIFICATIONS_ON,
+    COMMAND_CLEAR_NOTIFICATIONS,
+    COMMAND_REBOOT,
+    COMMAND_RESET_DEFAULTS,
+    COMMAND_INVALIDATE_OTA_IMAGE,
+    COMMAND_CLICK_FOR_WISDOM,
 } command_t;
+
 /* User code start [commands.h: User Data Types] */
 /* User code end [commands.h: User Data Types] */
-// Global Variables
 
+// Global Variables
 /* User code start [commands.h: User Global Variables] */
 /* User code end [commands.h: User Global Variables] */
-// Global Functions
 
+// Global Functions
 /* User code start [commands.h: User Global Functions] */
 /* User code end [commands.h: User Global Functions] */
+
 
 #endif // _COMMANDS_H_

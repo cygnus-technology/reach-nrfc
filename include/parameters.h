@@ -40,73 +40,79 @@
 #define _PARAMETERS_H_
 
 // Includes
-
 #include <stdbool.h>
 #include <stdint.h>
+
 /* User code start [parameters.h: User Includes] */
 /* User code end [parameters.h: User Includes] */
-// Defines
 
+// Defines
 #define NUM_PARAMS 11
 #define NUM_INIT_PARAMETER_NOTIFICATIONS 8
 #define NUM_EX_PARAMS 3
+
 /* User code start [parameters.h: User Defines] */
 /* User code end [parameters.h: User Defines] */
+
 // Data Types
+typedef enum {
+    PARAM_USER_DEVICE_NAME,
+    PARAM_TIMEZONE_ENABLED,
+    PARAM_TIMEZONE_OFFSET,
+    PARAM_BT_DEVICE_ADDRESS,
+    PARAM_UPTIME,
+    PARAM_BUTTON_PRESSED,
+    PARAM_IDENTIFY_LED,
+    PARAM_RGB_LED_STATE,
+    PARAM_RGB_LED_COLOR,
+    PARAM_IDENTIFY,
+    PARAM_IDENTIFY_INTERVAL,
+} param_t;
 
 typedef enum {
-    PARAM_USER_DEVICE_NAME  = 0,
-    PARAM_TIMEZONE_ENABLED  = 1,
-    PARAM_TIMEZONE_OFFSET   = 2,
-    PARAM_BT_DEVICE_ADDRESS = 3,
-    PARAM_UPTIME            = 4,
-    PARAM_BUTTON_PRESSED    = 5,
-    PARAM_IDENTIFY_LED      = 6,
-    PARAM_RGB_LED_STATE     = 7,
-    PARAM_RGB_LED_COLOR     = 8,
-    PARAM_IDENTIFY          = 9,
-    PARAM_IDENTIFY_INTERVAL = 10,
-} param_t;
-typedef enum {
-    PARAM_EI_IDENTIFY_LED  = 0,
-    PARAM_EI_RGB_LED_STATE = 1,
-    PARAM_EI_RGB_LED_COLOR = 2,
+    PARAM_EI_IDENTIFY_LED,
+    PARAM_EI_RGB_LED_STATE,
+    PARAM_EI_RGB_LED_COLOR,
 } param_ei_t;
+
 typedef enum {
-    RGB_LED_STATE_INDICES_RED   = 0,
-    RGB_LED_STATE_INDICES_GREEN = 1,
-    RGB_LED_STATE_INDICES_BLUE  = 2,
+    RGB_LED_STATE_INDICES_RED,
+    RGB_LED_STATE_INDICES_GREEN,
+    RGB_LED_STATE_INDICES_BLUE,
 } rgb_led_state_indices_t;
+
 typedef enum {
     RGB_LED_STATE_RED   = (0b1 << RGB_LED_STATE_INDICES_RED),
     RGB_LED_STATE_GREEN = (0b1 << RGB_LED_STATE_INDICES_GREEN),
     RGB_LED_STATE_BLUE  = (0b1 << RGB_LED_STATE_INDICES_BLUE),
 } rgb_led_state_t;
+
 typedef enum {
-    RGB_LED_COLOR_OFF     = 0,
-    RGB_LED_COLOR_RED     = 1,
-    RGB_LED_COLOR_GREEN   = 2,
-    RGB_LED_COLOR_YELLOW  = 3,
-    RGB_LED_COLOR_BLUE    = 4,
-    RGB_LED_COLOR_MAGENTA = 5,
-    RGB_LED_COLOR_CYAN    = 6,
-    RGB_LED_COLOR_WHITE   = 7,
+    RGB_LED_COLOR_OFF,
+    RGB_LED_COLOR_RED,
+    RGB_LED_COLOR_GREEN,
+    RGB_LED_COLOR_YELLOW,
+    RGB_LED_COLOR_BLUE,
+    RGB_LED_COLOR_MAGENTA,
+    RGB_LED_COLOR_CYAN,
+    RGB_LED_COLOR_WHITE,
 } rgb_led_color_t;
+
 /* User code start [parameters.h: User Data Types] */
 /* User code end [parameters.h: User Data Types] */
-// Global Variables
 
+// Global Variables
 /* User code start [parameters.h: User Global Variables] */
 /* User code end [parameters.h: User Global Variables] */
-// Global Functions
 
+// Global Functions
 void parameters_init(void);
 int parameters_reset_param(param_t pid, bool write, uint32_t write_timestamp);
 const char *parameters_get_ei_label(int32_t pei_id, uint32_t enum_bit_position);
+
 /* User code start [parameters.h: User Global Functions] */
-
 int parameters_reset_nvm(void);
-
 /* User code end [parameters.h: User Global Functions] */
+
 
 #endif // _PARAMETERS_H_

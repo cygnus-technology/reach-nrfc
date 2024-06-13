@@ -40,37 +40,40 @@
 #define _FILES_H_
 
 // Includes
-
 #include "cr_stack.h"
+
 /* User code start [files.h: User Includes] */
 /* User code end [files.h: User Includes] */
-// Defines
 
+// Defines
 #define NUM_FILES 3
+
 /* User code start [files.h: User Defines] */
 /* User code end [files.h: User Defines] */
-// Data Types
 
+// Data Types
 typedef enum {
-    FILE_OTA_BIN               = 0,
-    FILE_IO_TXT                = 1,
-    FILE_CYGNUS_REACH_LOGO_PNG = 2,
+    FILE_OTA_BIN,
+    FILE_IO_TXT,
+    FILE_CYGNUS_REACH_LOGO_PNG,
 } file_t;
+
 /* User code start [files.h: User Data Types] */
 /* User code end [files.h: User Data Types] */
-// Global Variables
 
+// Global Variables
 extern cr_FileInfo file_descriptions[3];
+
 /* User code start [files.h: User Global Variables] */
 /* User code end [files.h: User Global Variables] */
+
 // Global Functions
-
 void files_init(void);
-/* User code start [files.h: User Global Functions] */
 
+/* User code start [files.h: User Global Functions] */
 void files_reset(void);
 int ota_invalidate(void);
-
 /* User code end [files.h: User Global Functions] */
+
 
 #endif // _FILES_H_

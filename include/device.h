@@ -40,30 +40,32 @@
 #define _DEVICE_H_
 
 // Includes
-
 /* User code start [device.h: User Includes] */
 /* User code end [device.h: User Includes] */
-// Defines
 
+// Defines
 #define INCLUDE_PARAMETER_SERVICE
 #define INCLUDE_FILE_SERVICE
 #define INCLUDE_COMMAND_SERVICE
 #define INCLUDE_CLI_SERVICE
 #define INCLUDE_TIME_SERVICE
+
 /* User code start [device.h: User Defines] */
 /* User code end [device.h: User Defines] */
-// Data Types
 
+// Data Types
 /* User code start [device.h: User Data Types] */
 /* User code end [device.h: User Data Types] */
-// Global Variables
 
+// Global Variables
 /* User code start [device.h: User Global Variables] */
 /* User code end [device.h: User Global Variables] */
-// Global Functions
 
+// Global Functions
 const char *get_app_version();
+
 /* User code start [device.h: User Global Functions] */
 /* User code end [device.h: User Global Functions] */
+
 
 #endif // _DEVICE_H_

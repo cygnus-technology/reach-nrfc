@@ -37,7 +37,7 @@
  ********************************************************************************************/
 
 /********************************************************************************************
- ************************************     Includes     *************************************
+ *************************************     Includes     *************************************
  *******************************************************************************************/
 
 #include "parameters.h"
@@ -47,7 +47,6 @@
 #include "i3_log.h"
 
 /* User code start [parameters.c: User Includes] */
-
 #include <string.h>
 
 #include <zephyr/kernel.h>
@@ -58,7 +57,6 @@
 
 #include "main.h"
 #include "fs_utils.h"
-
 /* User code end [parameters.c: User Includes] */
 
 /********************************************************************************************
@@ -68,13 +66,11 @@
 #define PARAM_EI_TO_NUM_PEI_RESPONSES(param_ex) ((param_ex.num_labels / 8) + ((param_ex.num_labels % 8) ? 1:0))
 
 /* User code start [parameters.c: User Defines] */
-
 #define PARAM_REPO_FILE "/lfs/pr"
-
 /* User code end [parameters.c: User Defines] */
 
 /********************************************************************************************
- ***********************************     Data Types     ************************************
+ ************************************     Data Types     ************************************
  *******************************************************************************************/
 
 typedef struct {
@@ -88,14 +84,37 @@ typedef struct {
 /* User code end [parameters.c: User Data Types] */
 
 /********************************************************************************************
- ********************************     Global Variables     *********************************
+ *********************************     Global Variables     *********************************
  *******************************************************************************************/
 
 /* User code start [parameters.c: User Global Variables] */
 /* User code end [parameters.c: User Global Variables] */
 
 /********************************************************************************************
- *****************************     Local/Extern Variables     ******************************
+ ***************************     Local Function Declarations     ****************************
+ *******************************************************************************************/
+
+static int sFindIndexFromPid(uint32_t pid, uint32_t *index);
+static int sFindIndexFromPeiId(uint32_t pei_id, uint32_t *index);
+
+/* User code start [parameters.c: User Local Function Declarations] */
+
+// A custom hash function to only look at NVM parameters, to avoid invalidating the PR file when only non-NVM parameters change
+static uint32_t calculate_nvm_hash(void);
+
+// strnlen is technically a Linux function and is often not found by the compiler.
+size_t strnlen( const char * s,size_t maxlen );
+
+static int handle_pre_init(void);
+static int handle_init(cr_ParameterValue *data, const cr_ParameterInfo *desc);
+static int handle_post_init(void);
+static int handle_read(cr_ParameterValue *data);
+static int handle_write(const cr_ParameterValue *data);
+
+/* User code end [parameters.c: User Local Function Declarations] */
+
+/********************************************************************************************
+ ******************************     Local/Extern Variables     ******************************
  *******************************************************************************************/
 
 static int sCurrentParameter = 0;
@@ -280,50 +299,50 @@ static const cr_ParamExKey __cr_gen_pei_identify_led_labels[] = {
 
 static const cr_ParamExKey __cr_gen_pei_rgb_led_state_labels[] = {
     {
-        .id = 0,
+        .id = RGB_LED_STATE_INDICES_RED,
         .name = "Red"
     },
     {
-        .id = 1,
+        .id = RGB_LED_STATE_INDICES_GREEN,
         .name = "Green"
     },
     {
-        .id = 2,
+        .id = RGB_LED_STATE_INDICES_BLUE,
         .name = "Blue"
     }
 };
 
 static const cr_ParamExKey __cr_gen_pei_rgb_led_color_labels[] = {
     {
-        .id = 0,
+        .id = RGB_LED_COLOR_OFF,
         .name = "Off"
     },
     {
-        .id = 1,
+        .id = RGB_LED_COLOR_RED,
         .name = "Red"
     },
     {
-        .id = 2,
+        .id = RGB_LED_COLOR_GREEN,
         .name = "Green"
     },
     {
-        .id = 3,
+        .id = RGB_LED_COLOR_YELLOW,
         .name = "Yellow"
     },
     {
-        .id = 4,
+        .id = RGB_LED_COLOR_BLUE,
         .name = "Blue"
     },
     {
-        .id = 5,
+        .id = RGB_LED_COLOR_MAGENTA,
         .name = "Magenta"
     },
     {
-        .id = 6,
+        .id = RGB_LED_COLOR_CYAN,
         .name = "Cyan"
     },
     {
-        .id = 7,
+        .id = RGB_LED_COLOR_WHITE,
         .name = "White"
     }
 };
@@ -350,51 +369,23 @@ static const cr_gen_param_ex_t param_ex_desc[] = {
 };
 
 /* User code start [parameters.c: User Local/Extern Variables] */
-
 static bool pr_file_access_failed = false;
 static bool pr_file_exists = false;
 static struct fs_file_t pr_file;
 
 static uint32_t nvm_param_ids[NUM_PARAMS];
 static uint16_t nvm_param_count = 0;
-
 /* User code end [parameters.c: User Local/Extern Variables] */
 
 /********************************************************************************************
- ***************************     Local Function Declarations     ****************************
- *******************************************************************************************/
-
-static int sFindIndexFromPid(uint32_t pid, uint32_t *index);
-static int sFindIndexFromPeiId(uint32_t pei_id, uint32_t *index);
-
-/* User code start [parameters.c: User Local Function Declarations] */
-
-// A custom hash function to only look at NVM parameters, to avoid invalidating the PR file when only non-NVM parameters change
-static uint32_t calculate_nvm_hash(void);
-
-// strnlen is technically a Linux function and is often not found by the compiler.
-size_t strnlen( const char * s,size_t maxlen );
-
-static int handle_pre_init(void);
-static int handle_init(cr_ParameterValue *data, const cr_ParameterInfo *desc);
-static int handle_post_init(void);
-static int handle_read(cr_ParameterValue *data);
-static int handle_write(cr_ParameterValue *data);
-static uint32_t calculate_nvm_hash(void);
-
-/* User code end [parameters.c: User Local Function Declarations] */
-
-/********************************************************************************************
- ********************************     Global Functions     *********************************
+ *********************************     Global Functions     *********************************
  *******************************************************************************************/
 
 void parameters_init(void)
 {
     /* User code start [Parameter Repository: Pre-Init]
      * Here is the place to do any initialization required before individual parameters are initialized */
-
     handle_pre_init();
-
     /* User code end [Parameter Repository: Pre-Init] */
     memset(sCr_param_val, 0, sizeof(sCr_param_val));
     for (int i = 0; i < NUM_PARAMS; i++)
@@ -407,18 +398,14 @@ void parameters_init(void)
 
         /* User code start [Parameter Repository: Parameter Init]
          * Here is the place to do any initialization specific to a certain parameter */
-
         handle_init(&sCr_param_val[i], &param_desc[i]);
-
         /* User code end [Parameter Repository: Parameter Init] */
 
     } // end for
 
     /* User code start [Parameter Repository: Post-Init]
      * Here is the place to do any initialization required after parameters have been initialized */
-
     handle_post_init();
-
     /* User code end [Parameter Repository: Post-Init] */
 }
 
@@ -549,6 +536,9 @@ int parameters_reset_nvm(void)
  *************************     Cygnus Reach Callback Functions     **************************
  *******************************************************************************************/
 
+// Resets the application's pointer into the parameter table such that
+// the next call to crcb_parameter_discover_next() will return the
+// description of this parameter.
 int crcb_parameter_discover_reset(const uint32_t pid)
 {
     int rval = 0;
@@ -564,6 +554,10 @@ int crcb_parameter_discover_reset(const uint32_t pid)
     return 0;
 }
 
+// Gets the parameter description for the next parameter.
+// Allows the stack to iterate through the parameter list.
+// The caller provides a cr_ParameterInfo containing string pointers that will be overwritten.
+// The app owns the string pointers which must not be on the stack.
 int crcb_parameter_discover_next(cr_ParameterInfo *ppDesc)
 {
     if (sCurrentParameter >= NUM_PARAMS)
@@ -586,6 +580,7 @@ int crcb_parameter_discover_next(cr_ParameterInfo *ppDesc)
     return 0;
 }
 
+// Populate a parameter value structure
 int crcb_parameter_read(const uint32_t pid, cr_ParameterValue *data)
 {
     int rval = 0;
@@ -597,9 +592,7 @@ int crcb_parameter_read(const uint32_t pid, cr_ParameterValue *data)
 
     /* User code start [Parameter Repository: Parameter Read]
      * Here is the place to update the data from an external source, and update the return value if necessary */
-
     handle_read(&sCr_param_val[idx]);
-
     /* User code end [Parameter Repository: Parameter Read] */
 
     *data = sCr_param_val[idx];
@@ -619,9 +612,7 @@ int crcb_parameter_write(const uint32_t pid, const cr_ParameterValue *data)
 
     /* User code start [Parameter Repository: Parameter Write]
      * Here is the place to apply this change externally, and return an error if necessary */
-
     handle_write(data);
-
     /* User code end [Parameter Repository: Parameter Write] */
 
     sCr_param_val[idx].timestamp = data->timestamp;
@@ -694,6 +685,7 @@ int crcb_parameter_get_count()
     return numAvailable;
 }
 
+// return a number that changes if the parameter descriptions have changed.
 uint32_t crcb_compute_parameter_hash(void)
 {
     // Note that the layout of the structure param_desc differs by compiler.
@@ -1050,7 +1042,7 @@ static int handle_read(cr_ParameterValue *data)
     return rval;
 }
 
-static int handle_write(cr_ParameterValue *data)
+static int handle_write(const cr_ParameterValue *data)
 {
     int rval = 0;
 
@@ -1117,7 +1109,7 @@ static int handle_write(cr_ParameterValue *data)
             if (data->value.string_value[0] == 0)
                 rnrfc_set_advertised_name(CONFIG_BT_DEVICE_NAME);
             else
-                rnrfc_set_advertised_name(data->value.string_value);
+                rnrfc_set_advertised_name((char *) data->value.string_value);
             break;
         case PARAM_RGB_LED_STATE:
             main_set_rgb_led_state((uint8_t) data->value.bitfield_value);

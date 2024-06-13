@@ -37,7 +37,7 @@
  ********************************************************************************************/
 
 /********************************************************************************************
- ************************************     Includes     *************************************
+ *************************************     Includes     *************************************
  *******************************************************************************************/
 
 #include "cli.h"
@@ -45,7 +45,6 @@
 #include "i3_log.h"
 
 /* User code start [cli.c: User Includes] */
-
 #include <zephyr/kernel.h>
 #include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/drivers/uart.h>
@@ -54,7 +53,6 @@
 
 #include "app_version.h"
 #include "main.h"
-
 /* User code end [cli.c: User Includes] */
 
 /********************************************************************************************
@@ -62,41 +60,23 @@
  *******************************************************************************************/
 
 /* User code start [cli.c: User Defines] */
-
 #define CLI_TASK_STACK_SIZE 2048
 #define CLI_TASK_PRIORITY 5
-
 /* User code end [cli.c: User Defines] */
 
 /********************************************************************************************
- ***********************************     Data Types     ************************************
+ ************************************     Data Types     ************************************
  *******************************************************************************************/
 
 /* User code start [cli.c: User Data Types] */
 /* User code end [cli.c: User Data Types] */
 
 /********************************************************************************************
- ********************************     Global Variables     *********************************
+ *********************************     Global Variables     *********************************
  *******************************************************************************************/
 
 /* User code start [cli.c: User Global Variables] */
 /* User code end [cli.c: User Global Variables] */
-
-/********************************************************************************************
- *****************************     Local/Extern Variables     ******************************
- *******************************************************************************************/
-
-static char input[64];
-static uint8_t input_length = 0;
-
-/* User code start [cli.c: User Local/Extern Variables] */
-
-K_THREAD_STACK_DEFINE(cli_task_stack_area, CLI_TASK_STACK_SIZE);
-struct k_thread cli_task_data;
-k_tid_t cli_task_id;
-static const struct device *uart_dev = DEVICE_DT_GET_ONE(zephyr_cdc_acm_uart);
-
-/* User code end [cli.c: User Local/Extern Variables] */
 
 /********************************************************************************************
  ***************************     Local Function Declarations     ****************************
@@ -108,22 +88,33 @@ static void cli_write_char(char c);
 static bool cli_read_char(char *received);
 
 /* User code start [cli.c: User Local Function Declarations] */
-
 static void cli_task(void *arg, void *param2, void *param3);
 static void print_versions(void);
 static void slash(void);
 static void lm(const char *input);
-
 /* User code end [cli.c: User Local Function Declarations] */
 
 /********************************************************************************************
- ********************************     Global Functions     *********************************
+ ******************************     Local/Extern Variables     ******************************
+ *******************************************************************************************/
+
+static char input[64];
+static uint8_t input_length = 0;
+
+/* User code start [cli.c: User Local/Extern Variables] */
+K_THREAD_STACK_DEFINE(cli_task_stack_area, CLI_TASK_STACK_SIZE);
+struct k_thread cli_task_data;
+k_tid_t cli_task_id;
+static const struct device *uart_dev = DEVICE_DT_GET_ONE(zephyr_cdc_acm_uart);
+/* User code end [cli.c: User Local/Extern Variables] */
+
+/********************************************************************************************
+ *********************************     Global Functions     *********************************
  *******************************************************************************************/
 
 void cli_init(void)
 {
     /* User code start [CLI: Init] */
-
     cli_write("\033[2J\033[H");
     print_versions();
     cli_task_id = k_thread_create(
@@ -134,11 +125,14 @@ void cli_init(void)
         CLI_TASK_PRIORITY,
         K_FP_REGS,
         K_NO_WAIT);
-
     /* User code end [CLI: Init] */
     cli_write_prompt();
 }
 
+/**
+ * Gets and processes data from the command line
+ * @return True if CLI data was received during the poll (from sources other than BLE), or false otherwise.
+ */
 bool cli_poll(void)
 {
     if (input_length == sizeof(input))
@@ -216,25 +210,19 @@ int crcb_cli_enter(const char *ins)
     if (!strncmp("ver", ins, 3))
     {
         /* User code start [CLI: 'ver' handler] */
-
         print_versions();
-
         /* User code end [CLI: 'ver' handler] */
     }
     else if (!strncmp("/", ins, 1))
     {
         /* User code start [CLI: '/' handler] */
-
         slash();
-
         /* User code end [CLI: '/' handler] */
     }
     else if (!strncmp("lm", ins, 2))
     {
         /* User code start [CLI: 'lm' handler] */
-
         lm(ins);
-
         /* User code end [CLI: 'lm' handler] */
     }
     /* User code start [CLI: Custom command handling] */
@@ -256,9 +244,7 @@ static void cli_write_prompt(void)
     /* User code start [CLI: Write Prompt]
      * This is called after a command is sent and processed, indicating that the CLI is ready for a new prompt.
      * A typical implementation of this is to send a single '>' character. */
-
     cli_write_char('>');
-
     /* User code end [CLI: Write Prompt] */
 }
 
@@ -267,11 +253,9 @@ static void cli_write(char *text)
     /* User code start [CLI: Write]
      * This is where other output sources should be handled (for example, writing to a UART port)
      * This is called for outputs which are not necessary via BLE, such as clearing lines or handling backspaces */
-
     int i = 0;
     while (text[i] != 0)
         uart_poll_out(uart_dev, text[i++]);
-
     /* User code end [CLI: Write] */
 }
 
@@ -279,9 +263,7 @@ static void cli_write_char(char c)
 {
     /* User code start [CLI: Write Char]
      * This is used to write single characters, which may be handled differently from longer strings. */
-
     uart_poll_out(uart_dev, c);
-
     /* User code end [CLI: Write Char] */
 }
 
@@ -290,9 +272,7 @@ static bool cli_read_char(char *received)
     /* User code start [CLI: Read]
      * This is where other input sources (such as a UART) should be handled.
      * This should be non-blocking, and return true if a character was received, or false if not. */
-
     return (uart_poll_in(uart_dev, (unsigned char *) received) == 0);
-
     /* User code end [CLI: Read] */
 }
 
