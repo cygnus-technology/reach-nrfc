@@ -90,7 +90,7 @@
  *******************************************************************************************/
 
 static const char sAppVersion[] = TOSTRING(APP_MAJOR_VERSION) "." TOSTRING(APP_MINOR_VERSION) "." TOSTRING(APP_PATCH_VERSION) APP_VERSION_TAIL;
-const cr_DeviceInfoResponse device_info = {
+const cr_DeviceInfoResponse sDeviceInfo = {
     .device_name = "nRF52840 Dongle",
     .manufacturer = "Nordic Semiconductor",
     .device_description = "A demo of Reach features",
@@ -122,8 +122,8 @@ const char *get_app_version()
 int crcb_device_get_info(const cr_DeviceInfoRequest *request, cr_DeviceInfoResponse *pDi)
 {
     (void) request;
-    memcpy(pDi, &device_info, sizeof(cr_DeviceInfoResponse));
-    I3_LOG(LOG_MASK_REACH, "%s: %s\n", __FUNCTION__, device_info.device_name);
+    memcpy(pDi, &sDeviceInfo, sizeof(cr_DeviceInfoResponse));
+    I3_LOG(LOG_MASK_REACH, "%s: %s\n", __FUNCTION__, sDeviceInfo.device_name);
 
     sprintf(pDi->firmware_version, "%s", sAppVersion);
 

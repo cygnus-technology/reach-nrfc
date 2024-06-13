@@ -90,7 +90,7 @@ typedef enum
  *******************************************************************************************/
 
 static int sCommandIndex = 0;
-static const cr_CommandInfo command_desc[] = {
+static const cr_CommandInfo sCommandDescriptions[] = {
     {
         .id = COMMAND_PRESET_NOTIFICATIONS_ON,
         .name = "Preset Notifications On",
@@ -132,9 +132,9 @@ static const cr_CommandInfo command_desc[] = {
 };
 
 /* User code start [commands.c: User Local/Extern Variables] */
-static uint32_t times_clicked = 0;
-static uint8_t sequence_position = 0;
-static sequence_t active_sequence = SEQUENCE_INACTIVE;
+static uint32_t sTimesClicked = 0;
+static uint8_t sSequencePosition = 0;
+static sequence_t sActiveSequence = SEQUENCE_INACTIVE;
 /* User code end [commands.c: User Local/Extern Variables] */
 
 /********************************************************************************************
@@ -154,7 +154,7 @@ int crcb_get_command_count()
     int numAvailable = 0;
     for (i=0; i<NUM_COMMANDS; i++)
     {
-        if (crcb_access_granted(cr_ServiceIds_COMMANDS, command_desc[i].id))
+        if (crcb_access_granted(cr_ServiceIds_COMMANDS, sCommandDescriptions[i].id))
             numAvailable++;
     }
     return numAvailable;
@@ -168,7 +168,7 @@ int crcb_command_discover_next(cr_CommandInfo *cmd_desc)
         return cr_ErrorCodes_NO_DATA;
     }
 
-    while (!crcb_access_granted(cr_ServiceIds_COMMANDS, command_desc[sCommandIndex].id))
+    while (!crcb_access_granted(cr_ServiceIds_COMMANDS, sCommandDescriptions[sCommandIndex].id))
     {
         I3_LOG(LOG_MASK_FILES, "%s: sCommandIndex (%d) skip, access not granted", __FUNCTION__, sCommandIndex);
         sCommandIndex++;
@@ -178,7 +178,7 @@ int crcb_command_discover_next(cr_CommandInfo *cmd_desc)
             return cr_ErrorCodes_NO_DATA;
         }
     }
-    *cmd_desc = command_desc[sCommandIndex++];
+    *cmd_desc = sCommandDescriptions[sCommandIndex++];
     return 0;
 }
 
@@ -192,8 +192,8 @@ int crcb_command_discover_reset(const uint32_t cid)
 
     for (sCommandIndex = 0; sCommandIndex < NUM_COMMANDS; sCommandIndex++)
     {
-        if (command_desc[sCommandIndex].id == cid) {
-            if (!crcb_access_granted(cr_ServiceIds_COMMANDS, command_desc[sCommandIndex].id))
+        if (sCommandDescriptions[sCommandIndex].id == cid) {
+            if (!crcb_access_granted(cr_ServiceIds_COMMANDS, sCommandDescriptions[sCommandIndex].id))
             {
                 sCommandIndex = 0;
                 break;
@@ -240,28 +240,28 @@ int crcb_command_execute(const uint8_t cid)
         {
             I3_LOG(LOG_MASK_ALWAYS, TEXT_BOLDMAGENTA "Dispensing wisdom*...");
             I3_LOG(LOG_MASK_ALWAYS, TEXT_BOLDMAGENTA "* wisdom sometimes comes from unexpected places.  like maybe an error report?");
-            if (times_clicked > 3)
+            if (sTimesClicked > 3)
             {
                 int64_t time = k_uptime_get() / 100;
-                if (active_sequence == SEQUENCE_INACTIVE)
+                if (sActiveSequence == SEQUENCE_INACTIVE)
                 {
                     // Activate an easter egg based on the uptime
                     if (time % 10 == SEQUENCE_AUTOBIOGRAPHY)
-                        active_sequence = SEQUENCE_AUTOBIOGRAPHY;
+                        sActiveSequence = SEQUENCE_AUTOBIOGRAPHY;
                     else if (time % 10 == SEQUENCE_REDESIGN_YOUR_LOGO)
-                        active_sequence = SEQUENCE_REDESIGN_YOUR_LOGO;
+                        sActiveSequence = SEQUENCE_REDESIGN_YOUR_LOGO;
                     else if (time % 10 == SEQUENCE_SAY_HELLO)
-                        active_sequence = SEQUENCE_SAY_HELLO;
+                        sActiveSequence = SEQUENCE_SAY_HELLO;
                 }
-                if (active_sequence != SEQUENCE_INACTIVE)
+                if (sActiveSequence != SEQUENCE_INACTIVE)
                 {
                     // An easter egg has already been activated, continue that sequence until it is exhausted
-                    switch (active_sequence)
+                    switch (sActiveSequence)
                     {
                         case SEQUENCE_AUTOBIOGRAPHY:
                         {
                             // A comment made during David Bowie's 50th birthday live chat on AOL (Source: https://www.bowiewonderworld.com/chats/dbchat0197.htm)
-                            switch (sequence_position)
+                            switch (sSequencePosition)
                             {
                             case 0:
                                 cr_report_error(1997, "I'm looking for backing for an unauthorized auto-biography that I am writing.");
@@ -269,8 +269,8 @@ int crcb_command_execute(const uint8_t cid)
                             default:
                                 cr_report_error(1997, "Hopefully, this will sell in such huge numbers that I will be able to sue myself for an extraordinary amount of money "
                                                       "and finance the film version in which I will play everybody.");
-                                sequence_position = 0;
-                                active_sequence = SEQUENCE_INACTIVE;
+                                sSequencePosition = 0;
+                                sActiveSequence = SEQUENCE_INACTIVE;
                                 break;
                             }
                             break;
@@ -278,7 +278,7 @@ int crcb_command_execute(const uint8_t cid)
                         case SEQUENCE_REDESIGN_YOUR_LOGO:
                         {
                             // Lyrics from "Redesign Your Logo" by Lemon Demon
-                            switch (sequence_position)
+                            switch (sSequencePosition)
                             {
                             case 0:
                                 cr_report_error(2016, "Redesign your logo, we know what we're doing.  We are here to help you; everything's connected");
@@ -291,8 +291,8 @@ int crcb_command_execute(const uint8_t cid)
                                 break;
                             default:
                                 cr_report_error(2016, "We will find the angle, starting with convention.  On to innovation; everything's connected");
-                                sequence_position = 0;
-                                active_sequence = SEQUENCE_INACTIVE;
+                                sSequencePosition = 0;
+                                sActiveSequence = SEQUENCE_INACTIVE;
                                 break;
                             }
                             break;
@@ -300,7 +300,7 @@ int crcb_command_execute(const uint8_t cid)
                         case SEQUENCE_SAY_HELLO:
                         {
                             // Lyrics from "Say Hello" by Laurie Anderson
-                            switch (sequence_position)
+                            switch (sSequencePosition)
                             {
                             case 0:
                                 cr_report_error(1984, "A certain American religious sect has been looking at conditions of the world during the Flood");
@@ -325,8 +325,8 @@ int crcb_command_execute(const uint8_t cid)
                                 break;
                             default:
                                 cr_report_error(1984, "So we are led to the only available conclusion in this time warp, and that is that the Ark has simply not left yet");
-                                sequence_position = 0;
-                                active_sequence = SEQUENCE_INACTIVE;
+                                sSequencePosition = 0;
+                                sActiveSequence = SEQUENCE_INACTIVE;
                                 break;
                             }
                             break;
@@ -334,12 +334,12 @@ int crcb_command_execute(const uint8_t cid)
                         default:
                             break;
                     }
-                    if (active_sequence != SEQUENCE_INACTIVE)
-                        sequence_position++;
+                    if (sActiveSequence != SEQUENCE_INACTIVE)
+                        sSequencePosition++;
                     break;
                 }
             }
-            switch (times_clicked % 4)
+            switch (sTimesClicked % 4)
             {
             case 0:
                 cr_report_error(cr_ErrorCodes_NO_ERROR,
@@ -358,7 +358,7 @@ int crcb_command_execute(const uint8_t cid)
                 cr_report_error(3, "Is that all there is?");
                 break;
             }
-            times_clicked++;
+            sTimesClicked++;
             break;
         }
         /* User code end [Commands: Command Handler] */

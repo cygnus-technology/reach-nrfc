@@ -76,7 +76,29 @@
  *********************************     Global Variables     *********************************
  *******************************************************************************************/
 
-cr_FileInfo file_descriptions[] = {
+/* User code start [files.c: User Global Variables] */
+/* User code end [files.c: User Global Variables] */
+
+/********************************************************************************************
+ ***************************     Local Function Declarations     ****************************
+ *******************************************************************************************/
+
+static int sFindIndexFromFid(uint32_t fid, uint32_t *index);
+
+/* User code start [files.c: User Local Function Declarations] */
+static int ota_erase(void);
+static int ota_write(const uint8_t *data, size_t offset, size_t size);
+static int ota_flush_cache(void);
+static int ota_mark_valid(void);
+static int ota_write_helper(void);
+/* User code end [files.c: User Local Function Declarations] */
+
+/********************************************************************************************
+ ******************************     Local/Extern Variables     ******************************
+ *******************************************************************************************/
+
+static int sFidIndex = 0;
+cr_FileInfo sFileDescriptions[] = {
     {
         .file_id = FILE_OTA_BIN,
         .file_name = "ota.bin",
@@ -106,36 +128,13 @@ cr_FileInfo file_descriptions[] = {
     }
 };
 
-/* User code start [files.c: User Global Variables] */
-/* User code end [files.c: User Global Variables] */
-
-/********************************************************************************************
- ***************************     Local Function Declarations     ****************************
- *******************************************************************************************/
-
-static int sFindIndexFromFid(uint32_t fid, uint8_t *index);
-
-/* User code start [files.c: User Local Function Declarations] */
-static int ota_erase(void);
-static int ota_write(const uint8_t *data, size_t offset, size_t size);
-static int ota_flush_cache(void);
-static int ota_mark_valid(void);
-static int ota_write_helper(void);
-/* User code end [files.c: User Local Function Declarations] */
-
-/********************************************************************************************
- ******************************     Local/Extern Variables     ******************************
- *******************************************************************************************/
-
-static int sFid_index = 0;
-
 /* User code start [files.c: User Local/Extern Variables] */
-static uint8_t ota_ram[OTA_RAM_BLOCK_SIZE];
-static size_t ota_ram_start_offset = 0;
-static size_t ota_ram_size = 0;
+static uint8_t sOtaRam[OTA_RAM_BLOCK_SIZE];
+static size_t sOtaRamStartOffset = 0;
+static size_t sOtaRamSize = 0;
 
-static char io_txt[MAX_IO_TXT_LENGTH];
-static size_t io_txt_size = 0;
+static char sIoTxtContents[MAX_IO_TXT_LENGTH];
+static size_t sIoTxtSize = 0;
 /* User code end [files.c: User Local/Extern Variables] */
 
 /********************************************************************************************
@@ -156,36 +155,54 @@ void files_init(void)
             rval = fs_utils_update_file(IO_TXT_FILENAME, (uint8_t *) default_io_txt, sizeof(default_io_txt));
             if (rval != 0)
                 I3_LOG(LOG_MASK_ERROR, "io.txt write failed, error %d", rval);
-            memset(io_txt, 0, sizeof(io_txt));
-            memcpy(io_txt, default_io_txt, sizeof(default_io_txt));
-            io_txt_size = sizeof(default_io_txt);
-            file_descriptions[FILE_IO_TXT].current_size_bytes = (int32_t) io_txt_size;
+            memset(sIoTxtContents, 0, sizeof(sIoTxtContents));
+            memcpy(sIoTxtContents, default_io_txt, sizeof(default_io_txt));
+            sIoTxtSize = sizeof(default_io_txt);
+            sFileDescriptions[FILE_IO_TXT].current_size_bytes = (int32_t) sIoTxtSize;
             break;
         }
         case 1:
         {
             // File exists, get it
-            memset(io_txt, 0, sizeof(io_txt));
-            io_txt_size = sizeof(io_txt);
-            rval = fs_utils_get_file(IO_TXT_FILENAME, (uint8_t *) io_txt, 0, &io_txt_size);
+            memset(sIoTxtContents, 0, sizeof(sIoTxtContents));
+            sIoTxtSize = sizeof(sIoTxtContents);
+            rval = fs_utils_get_file(IO_TXT_FILENAME, (uint8_t *) sIoTxtContents, 0, &sIoTxtSize);
             if (rval != 0)
                 I3_LOG(LOG_MASK_ERROR, "io.txt read failed, error %d", rval);
             else
-                file_descriptions[FILE_IO_TXT].current_size_bytes = (int32_t) io_txt_size;
+                sFileDescriptions[FILE_IO_TXT].current_size_bytes = (int32_t) sIoTxtSize;
             break;
         }
         default:
         {
             I3_LOG(LOG_MASK_ERROR, "io.txt access failed, error %d", rval);
-            memset(io_txt, 0, sizeof(io_txt));
-            memcpy(io_txt, default_io_txt, sizeof(default_io_txt));
-            io_txt_size = sizeof(default_io_txt);
-            file_descriptions[FILE_IO_TXT].current_size_bytes = (int32_t) io_txt_size;
+            memset(sIoTxtContents, 0, sizeof(sIoTxtContents));
+            memcpy(sIoTxtContents, default_io_txt, sizeof(default_io_txt));
+            sIoTxtSize = sizeof(default_io_txt);
+            sFileDescriptions[FILE_IO_TXT].current_size_bytes = (int32_t) sIoTxtSize;
             break;
         }
     }
 
     /* User code end [Files: Init] */
+}
+
+int files_set_description(uint32_t fid, cr_FileInfo *file_desc)
+{
+    int rval = 0;
+    affirm(file_desc != NULL);
+    uint32_t idx;
+    rval = sFindIndexFromFid(fid, &idx);
+    if (rval != 0)
+        return rval;
+
+    /* User code start [Files: Set Description]
+     * If the file description needs to be updated (for example, changing the current size), now's the time */
+    /* User code end [Files: Set Description] */
+
+    sFileDescriptions[idx] = *file_desc;
+
+    return rval;
 }
 
 /* User code start [files.c: User Global Functions] */
@@ -195,10 +212,10 @@ void files_reset(void)
     int rval = fs_utils_update_file(IO_TXT_FILENAME, (uint8_t *) default_io_txt, sizeof(default_io_txt));
     if (rval != 0)
         I3_LOG(LOG_MASK_ERROR, "io.txt write failed, error %d", rval);
-    memset(io_txt, 0, sizeof(io_txt));
-    memcpy(io_txt, default_io_txt, sizeof(default_io_txt));
-    io_txt_size = sizeof(default_io_txt);
-    file_descriptions[FILE_IO_TXT].current_size_bytes = (int32_t) io_txt_size;
+    memset(sIoTxtContents, 0, sizeof(sIoTxtContents));
+    memcpy(sIoTxtContents, default_io_txt, sizeof(default_io_txt));
+    sIoTxtSize = sizeof(default_io_txt);
+    sFileDescriptions[FILE_IO_TXT].current_size_bytes = (int32_t) sIoTxtSize;
 }
 
 int ota_invalidate(void)
@@ -216,7 +233,7 @@ int crcb_file_get_description(uint32_t fid, cr_FileInfo *file_desc)
 {
     int rval = 0;
     affirm(file_desc != NULL);
-    uint8_t idx;
+    uint32_t idx;
     rval = sFindIndexFromFid(fid, &idx);
     if (rval != 0)
         return rval;
@@ -225,9 +242,9 @@ int crcb_file_get_description(uint32_t fid, cr_FileInfo *file_desc)
      * If the file description needs to be updated (for example, changing the current size), now's the time */
     /* User code end [Files: Get Description] */
 
-    *file_desc = file_descriptions[idx];
+    *file_desc = sFileDescriptions[idx];
 
-    return 0;
+    return rval;
 }
 
 int crcb_file_get_file_count()
@@ -236,7 +253,7 @@ int crcb_file_get_file_count()
     int numAvailable = 0;
     for (i = 0; i < NUM_FILES; i++)
     {
-        if (crcb_access_granted(cr_ServiceIds_FILES, file_descriptions[i].file_id)) numAvailable++;
+        if (crcb_access_granted(cr_ServiceIds_FILES, sFileDescriptions[i].file_id)) numAvailable++;
     }
     return numAvailable;
 }
@@ -244,41 +261,41 @@ int crcb_file_get_file_count()
 int crcb_file_discover_reset(const uint8_t fid)
 {
     int rval = 0;
-    uint8_t idx;
+    uint32_t idx;
     rval = sFindIndexFromFid(fid, &idx);
     if (0 != rval)
     {
         I3_LOG(LOG_MASK_ERROR, "%s(%d): invalid FID, using NUM_FILES.", __FUNCTION__, fid);
-        sFid_index = NUM_FILES;
+        sFidIndex = NUM_FILES;
         return cr_ErrorCodes_INVALID_ID;
     }
-    if (!crcb_access_granted(cr_ServiceIds_FILES, file_descriptions[sFid_index].file_id))
+    if (!crcb_access_granted(cr_ServiceIds_FILES, sFileDescriptions[sFidIndex].file_id))
     {
         I3_LOG(LOG_MASK_ERROR, "%s(%d): Access not granted, using NUM_FILES.", __FUNCTION__, fid);
-        sFid_index = NUM_FILES;
+        sFidIndex = NUM_FILES;
         return cr_ErrorCodes_BAD_FILE;
     }
-    sFid_index = idx;
+    sFidIndex = idx;
     return 0;
 }
 
 int crcb_file_discover_next(cr_FileInfo *file_desc)
 {
-    if (sFid_index >= NUM_FILES) // end of search
+    if (sFidIndex >= NUM_FILES) // end of search
         return cr_ErrorCodes_NO_DATA;
 
-    while (!crcb_access_granted(cr_ServiceIds_FILES, file_desc[sFid_index].file_id))
+    while (!crcb_access_granted(cr_ServiceIds_FILES, file_desc[sFidIndex].file_id))
     {
-        I3_LOG(LOG_MASK_FILES, "%s: sFid_index (%d) skip, access not granted",
-               __FUNCTION__, sFid_index);
-        sFid_index++;
-        if (sFid_index >= NUM_FILES)
+        I3_LOG(LOG_MASK_FILES, "%s: sFidIndex (%d) skip, access not granted",
+               __FUNCTION__, sFidIndex);
+        sFidIndex++;
+        if (sFidIndex >= NUM_FILES)
         {
-            I3_LOG(LOG_MASK_PARAMS, "%s: skipped to sFid_index (%d) >= NUM_FILES (%d)", __FUNCTION__, sFid_index, NUM_FILES);
+            I3_LOG(LOG_MASK_PARAMS, "%s: skipped to sFidIndex (%d) >= NUM_FILES (%d)", __FUNCTION__, sFidIndex, NUM_FILES);
             return cr_ErrorCodes_NO_DATA;
         }
     }
-    *file_desc = file_descriptions[sFid_index++];
+    *file_desc = sFileDescriptions[sFidIndex++];
     return 0;
 }
 
@@ -290,7 +307,7 @@ int crcb_file_discover_next(cr_FileInfo *file_desc)
 int crcb_read_file(const uint32_t fid, const int offset, const size_t bytes_requested, uint8_t *pData, int *bytes_read)
 {
     int rval = 0;
-    uint8_t idx;
+    uint32_t idx;
     rval = sFindIndexFromFid(fid, &idx);
     if (0 != rval)
     {
@@ -309,17 +326,17 @@ int crcb_read_file(const uint32_t fid, const int offset, const size_t bytes_requ
     switch (fid)
     {
         case FILE_IO_TXT:
-            if (offset < 0 || offset >= io_txt_size)
+            if (offset < 0 || offset >= sIoTxtSize)
                 return cr_ErrorCodes_NO_DATA;
             if (offset == 0)
             {
                 // Update the local buffer of the file in case a write failed before this read
-                int rval = fs_utils_get_file(IO_TXT_FILENAME, (uint8_t *) io_txt, 0, &io_txt_size);
+                int rval = fs_utils_get_file(IO_TXT_FILENAME, (uint8_t *) sIoTxtContents, 0, &sIoTxtSize);
                 if (rval != 0)
                     I3_LOG(LOG_MASK_ERROR, "io.txt read failed, error %d", rval);
             }
-            *bytes_read = ((offset + bytes_requested) > io_txt_size) ? (io_txt_size - offset):bytes_requested;
-            memcpy(pData, &io_txt[offset], (size_t) *bytes_read);
+            *bytes_read = ((offset + bytes_requested) > sIoTxtSize) ? (sIoTxtSize - offset):bytes_requested;
+            memcpy(pData, &sIoTxtContents[offset], (size_t) *bytes_read);
             break;
         case FILE_CYGNUS_REACH_LOGO_PNG:
             if (offset < 0 || offset >= sizeof(cygnus_reach_logo))
@@ -337,7 +354,7 @@ int crcb_read_file(const uint32_t fid, const int offset, const size_t bytes_requ
 int crcb_file_prepare_to_write(const uint32_t fid, const size_t offset, const size_t bytes)
 {
     int rval = 0;
-    uint8_t idx;
+    uint32_t idx;
     rval = sFindIndexFromFid(fid, &idx);
     if (0 != rval)
     {
@@ -365,21 +382,21 @@ int crcb_file_prepare_to_write(const uint32_t fid, const size_t offset, const si
                 I3_LOG(LOG_MASK_ERROR, "Flash erase failed, error %d", rval);
                 rval = cr_ErrorCodes_WRITE_FAILED;
             }
-            return rval;
+            break;
         }
         case FILE_IO_TXT:
             // Partial writes are currently not supported by this demo
             if (offset != 0)
                 return cr_ErrorCodes_INVALID_PARAMETER;
-            if (offset + bytes > sizeof(io_txt))
+            if (offset + bytes > sizeof(sIoTxtContents))
                 return cr_ErrorCodes_BUFFER_TOO_SMALL;
-            memset(&io_txt[offset], 0, bytes);
-            io_txt_size = bytes + offset;
+            memset(&sIoTxtContents[offset], 0, bytes);
+            sIoTxtSize = bytes + offset;
             break;
     }
 
     /* User code end [Files: Pre-Write] */
-    return 0;
+    return rval;
 }
 
 // which file
@@ -389,7 +406,7 @@ int crcb_file_prepare_to_write(const uint32_t fid, const size_t offset, const si
 int crcb_write_file(const uint32_t fid, const int offset, const size_t bytes, const uint8_t *pData)
 {
     int rval = 0;
-    uint8_t idx;
+    uint32_t idx;
     rval = sFindIndexFromFid(fid, &idx);
     if (0 != rval)
     {
@@ -409,23 +426,23 @@ int crcb_write_file(const uint32_t fid, const int offset, const size_t bytes, co
                 I3_LOG(LOG_MASK_ERROR, "Failed to write OTA file at offset 0x%x, error %d", offset, rval);
                 rval = cr_ErrorCodes_WRITE_FAILED;
             }
-            return rval;
+            break;
         }
         case FILE_IO_TXT:
-            if (offset < 0 || offset + bytes > io_txt_size)
+            if (offset < 0 || offset + bytes > sIoTxtSize)
                 return cr_ErrorCodes_INVALID_PARAMETER;
-            memcpy(&io_txt[offset], pData, bytes);
+            memcpy(&sIoTxtContents[offset], pData, bytes);
             break;
     }
 
     /* User code end [Files: Write] */
-    return 0;
+    return rval;
 }
 
 int crcb_file_transfer_complete(const uint32_t fid)
 {
     int rval = 0;
-    uint8_t idx;
+    uint32_t idx;
     rval = sFindIndexFromFid(fid, &idx);
     if (0 != rval)
     {
@@ -451,25 +468,25 @@ int crcb_file_transfer_complete(const uint32_t fid)
                 I3_LOG(LOG_MASK_ERROR, "Failed to write magic number, error %d", rval);
                 rval = cr_ErrorCodes_WRITE_FAILED;
             }
-            return rval;
+            break;
         }
         case FILE_IO_TXT:
-            int rval = fs_utils_update_file(IO_TXT_FILENAME, (uint8_t *) io_txt, io_txt_size);
+            int rval = fs_utils_update_file(IO_TXT_FILENAME, (uint8_t *) sIoTxtContents, sIoTxtSize);
             if (rval != 0)
                 I3_LOG(LOG_MASK_ERROR, "io.txt write failed, error %d", rval);
-            file_descriptions[FILE_IO_TXT].current_size_bytes = (int32_t) io_txt_size;
+            sFileDescriptions[FILE_IO_TXT].current_size_bytes = (int32_t) sIoTxtSize;
             break;
     }
 
     /* User code end [Files: Write Complete] */
-    return 0;
+    return rval;
 }
 
 // returns zero or an error code
 int crcb_erase_file(const uint32_t fid)
 {
     int rval = 0;
-    uint8_t idx;
+    uint32_t idx;
     rval = sFindIndexFromFid(fid, &idx);
     if (0 != rval)
     {
@@ -485,14 +502,14 @@ int crcb_erase_file(const uint32_t fid)
             int rval = fs_utils_erase_file(IO_TXT_FILENAME);
             if (rval != 0)
                 I3_LOG(LOG_MASK_ERROR, "Failed to erase io.txt, error %d", rval);
-            io_txt_size = 0;
-            memset(io_txt, 0, sizeof(io_txt));
-            file_descriptions[FILE_IO_TXT].current_size_bytes = (int32_t) io_txt_size;
+            sIoTxtSize = 0;
+            memset(sIoTxtContents, 0, sizeof(sIoTxtContents));
+            sFileDescriptions[FILE_IO_TXT].current_size_bytes = (int32_t) sIoTxtSize;
             break;
     }
 
     /* User code end [Files: Erase] */
-    return 0;
+    return rval;
 }
 
 /* User code start [files.c: User Cygnus Reach Callback Functions] */
@@ -502,12 +519,12 @@ int crcb_erase_file(const uint32_t fid)
  *********************************     Local Functions     **********************************
  *******************************************************************************************/
 
-static int sFindIndexFromFid(uint32_t fid, uint8_t *index)
+static int sFindIndexFromFid(uint32_t fid, uint32_t *index)
 {
-    uint8_t idx;
+    uint32_t idx;
     for (idx = 0; idx < NUM_FILES; idx++)
     {
-        if (file_descriptions[idx].file_id == fid)
+        if (sFileDescriptions[idx].file_id == fid)
         {
             *index = idx;
             return 0;
@@ -526,16 +543,16 @@ static int ota_erase(void)
 static int ota_write(const uint8_t *data, size_t offset, size_t size)
 {
     int rval = 0;
-    if (((offset + size) - ota_ram_start_offset) < OTA_RAM_BLOCK_SIZE)
+    if (((offset + size) - sOtaRamStartOffset) < OTA_RAM_BLOCK_SIZE)
     {
         // Case where everything will fit inside the cache and no write is required
-        memcpy(&ota_ram[offset - ota_ram_start_offset], data, size);
-        ota_ram_size = offset + size - ota_ram_start_offset;
+        memcpy(&sOtaRam[offset - sOtaRamStartOffset], data, size);
+        sOtaRamSize = offset + size - sOtaRamStartOffset;
     }
     else
     {
         // Cache overflow, a write will be required as well as probably filling up the cache partially
-        if (offset - ota_ram_start_offset > OTA_RAM_BLOCK_SIZE)
+        if (offset - sOtaRamStartOffset > OTA_RAM_BLOCK_SIZE)
         {
             // Special case where new write is totally outside the bounds of the current buffer
             rval = ota_write_helper();
@@ -543,27 +560,27 @@ static int ota_write(const uint8_t *data, size_t offset, size_t size)
                 I3_LOG(LOG_MASK_ERROR, "Failed to clear OTA write cache, error %d", rval);
             // Align the start offset
             if (offset % 4)
-                ota_ram_start_offset = offset - (offset % 4);
+                sOtaRamStartOffset = offset - (offset % 4);
             else
-                ota_ram_start_offset = offset;
-            memcpy(&ota_ram[offset - ota_ram_start_offset], data, size);
-            ota_ram_size = offset + size - ota_ram_start_offset;
+                sOtaRamStartOffset = offset;
+            memcpy(&sOtaRam[offset - sOtaRamStartOffset], data, size);
+            sOtaRamSize = offset + size - sOtaRamStartOffset;
         }
         else
         {
             // Write definitely requires flushing the cache, and may also require writing a small amount to the cache
-            size_t write_1_size = ota_ram_start_offset + OTA_RAM_BLOCK_SIZE - offset;
+            size_t write_1_size = sOtaRamStartOffset + OTA_RAM_BLOCK_SIZE - offset;
             size_t write_2_size = size - write_1_size;
-            memcpy(&ota_ram[offset - ota_ram_start_offset], data, write_1_size);
-            ota_ram_size = OTA_RAM_BLOCK_SIZE;
+            memcpy(&sOtaRam[offset - sOtaRamStartOffset], data, write_1_size);
+            sOtaRamSize = OTA_RAM_BLOCK_SIZE;
             rval = ota_write_helper();
             if (rval != 0)
                 I3_LOG(LOG_MASK_ERROR, "Failed to clear OTA write cache, error %d", rval);
-            ota_ram_start_offset = offset + write_1_size;
+            sOtaRamStartOffset = offset + write_1_size;
             if (write_2_size > 0)
             {
-                memcpy(ota_ram, &data[write_1_size], write_2_size);
-                ota_ram_size = write_2_size;
+                memcpy(sOtaRam, &data[write_1_size], write_2_size);
+                sOtaRamSize = write_2_size;
             }
         }
     }
@@ -583,16 +600,16 @@ static int ota_mark_valid(void)
 
 static int ota_write_helper(void)
 {
-    if (ota_ram_size % 4)
+    if (sOtaRamSize % 4)
     {
         // Align to 4 bytes
-        ota_ram_size += (4 - (ota_ram_size % 4));
+        sOtaRamSize += (4 - (sOtaRamSize % 4));
     }
-    int rval = flash_write(FLASH_AREA_DEVICE(image_1), FLASH_AREA_OFFSET(image_1) + ota_ram_start_offset, ota_ram, ota_ram_size);
+    int rval = flash_write(FLASH_AREA_DEVICE(image_1), FLASH_AREA_OFFSET(image_1) + sOtaRamStartOffset, sOtaRam, sOtaRamSize);
     // Reset buffer
-    ota_ram_size = 0;
-    ota_ram_start_offset = 0;
-    memset(ota_ram, 0, sizeof(ota_ram));
+    sOtaRamSize = 0;
+    sOtaRamStartOffset = 0;
+    memset(sOtaRam, 0, sizeof(sOtaRam));
     return rval;
 }
 

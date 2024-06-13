@@ -34,12 +34,12 @@ static uint32_t calculate_nvm_hash(void);
 // strnlen is technically a Linux function and is often not found by the compiler.
 size_t strnlen( const char * s,size_t maxlen );
 
-static bool pr_file_access_failed = false;
-static bool pr_file_exists = false;
-static struct fs_file_t pr_file;
+static bool sPrFileAccessFailed = false;
+static bool sPrFileExists = false;
+static struct fs_file_t sPrFile;
 
-static uint32_t nvm_param_ids[NUM_PARAMS];
-static uint16_t nvm_param_count = 0;
+static uint32_t sNvmParameterIds[NUM_PARAMS];
+static uint16_t sNvmParameterCount = 0;
 #endif
 
 int param_repo_reset_nvm(void)
@@ -129,7 +129,7 @@ int app_handle_param_repo_pre_init(void)
 {
 #ifdef PARAM_REPO_USE_FILE_STORAGE
     int rval = 0;
-    fs_file_t_init(&pr_file);
+    fs_file_t_init(&sPrFile);
     uint32_t hash = calculate_nvm_hash();
     uint32_t stored_hash = 0;
     if (fs_utils_file_exists(PARAM_REPO_FILE) == 1)
@@ -137,14 +137,14 @@ int app_handle_param_repo_pre_init(void)
         I3_LOG(LOG_MASK_PARAMS, "PR file found");
         // Verify that the file is valid and isn't for an earlier version of parameter repo
         // Theoretically should only cover parameters in the NVM, but this gets complicated with enum/bitfield descriptions tied to parameters
-        rval = fs_open(&pr_file, PARAM_REPO_FILE, FS_O_RDWR);
+        rval = fs_open(&sPrFile, PARAM_REPO_FILE, FS_O_RDWR);
         if (rval < 0)
         {
             I3_LOG(LOG_MASK_ERROR, "Failed to open PR file, error %d", rval);
-            pr_file_access_failed = true;
+            sPrFileAccessFailed = true;
             return -1;
         }
-        rval = (int) fs_read(&pr_file, &stored_hash, sizeof(stored_hash));
+        rval = (int) fs_read(&sPrFile, &stored_hash, sizeof(stored_hash));
         if (rval < sizeof(stored_hash) || stored_hash != hash)
         {
             if (rval < sizeof(stored_hash))
@@ -152,42 +152,42 @@ int app_handle_param_repo_pre_init(void)
             else
                 I3_LOG(LOG_MASK_WARN, "Stored hash 0x%x does not match computed hash 0x%x", stored_hash, hash);
             // Close and erase the file, and continue as if the file never existed
-            rval = fs_close(&pr_file);
+            rval = fs_close(&sPrFile);
             if (rval < 0)
             {
                 I3_LOG(LOG_MASK_ERROR, "Failed to close invalid PR file, error %d", rval);
-                pr_file_access_failed = true;
+                sPrFileAccessFailed = true;
                 return -2;
             }
             rval = fs_unlink(PARAM_REPO_FILE);
             if (rval < 0)
             {
                 I3_LOG(LOG_MASK_ERROR, "Failed to unlink invalid PR file, error %d", rval);
-                pr_file_access_failed = true;
+                sPrFileAccessFailed = true;
                 return -3;
             }
         }
         else
         {
-            pr_file_exists = true;
+            sPrFileExists = true;
         }
     }
-    if (!pr_file_exists)
+    if (!sPrFileExists)
     {
         I3_LOG(LOG_MASK_WARN, "No valid PR file found, creating a new one");
-        rval = fs_open(&pr_file, PARAM_REPO_FILE, FS_O_RDWR | FS_O_CREATE);
+        rval = fs_open(&sPrFile, PARAM_REPO_FILE, FS_O_RDWR | FS_O_CREATE);
         if (rval < 0)
         {
             I3_LOG(LOG_MASK_ERROR, "Failed to create PR file, error %d", rval);
-            pr_file_access_failed = true;
+            sPrFileAccessFailed = true;
             return -4;
         }
         stored_hash = ~hash;
-        rval = (int) fs_write(&pr_file, &stored_hash, sizeof(stored_hash));
+        rval = (int) fs_write(&sPrFile, &stored_hash, sizeof(stored_hash));
         if (rval < 0)
         {
             I3_LOG(LOG_MASK_ERROR, "Failed to write anti-hash to PR file, error %d", rval);
-            pr_file_access_failed = true;
+            sPrFileAccessFailed = true;
             return -5;
         }
     }
@@ -201,18 +201,18 @@ int app_handle_param_repo_init(cr_ParameterValue *data, cr_ParameterInfo *desc)
 #ifdef PARAM_REPO_USE_FILE_STORAGE
     if (desc->storage_location == cr_StorageLocation_NONVOLATILE)
     {
-        if (!pr_file_access_failed)
+        if (!sPrFileAccessFailed)
         {
-            if (pr_file_exists)
+            if (sPrFileExists)
             {
                 I3_LOG(LOG_MASK_PARAMS, "Getting data about parameter %u from existing PR file", data->parameter_id);
                 // Get the data from the file
                 cr_ParameterInfo temp;
-                rval = (int) fs_read(&pr_file, &temp, sizeof(cr_ParameterValue));
+                rval = (int) fs_read(&sPrFile, &temp, sizeof(cr_ParameterValue));
                 if (rval != sizeof(cr_ParameterValue))
                 {
                     I3_LOG(LOG_MASK_ERROR, "Failed to read parameter ID %u, error %d", data->parameter_id, rval);
-                    pr_file_access_failed = true;
+                    sPrFileAccessFailed = true;
                 }
                 else
                 {
@@ -221,18 +221,18 @@ int app_handle_param_repo_init(cr_ParameterValue *data, cr_ParameterInfo *desc)
                 // If we got the data successfully, copy it to the parameter
                 memcpy(data, &temp, sizeof(temp));
                 // Update parameter map
-                nvm_param_ids[nvm_param_count++] = data->parameter_id;
+                sNvmParameterIds[sNvmParameterCount++] = data->parameter_id;
             }
             else
             {
                 I3_LOG(LOG_MASK_PARAMS, "Writing data about parameter %u to new PR file", data->parameter_id);
-                nvm_param_ids[nvm_param_count++] = data->parameter_id;
+                sNvmParameterIds[sNvmParameterCount++] = data->parameter_id;
                 // Write the data to the file
-                rval = (int) fs_write(&pr_file, data, sizeof(cr_ParameterValue));
+                rval = (int) fs_write(&sPrFile, data, sizeof(cr_ParameterValue));
                 if (rval != sizeof(cr_ParameterValue))
                 {
                     I3_LOG(LOG_MASK_ERROR, "Failed to write parameter ID %u, error %d", data->parameter_id, rval);
-                    pr_file_access_failed = true;
+                    sPrFileAccessFailed = true;
                 }
                 else
                 {
@@ -265,22 +265,22 @@ int app_handle_param_repo_init(cr_ParameterValue *data, cr_ParameterInfo *desc)
 int app_handle_param_repo_post_init(void)
 {
 #ifdef PARAM_REPO_USE_FILE_STORAGE
-    if (!pr_file_access_failed)
+    if (!sPrFileAccessFailed)
     {
-        if (!pr_file_exists)
+        if (!sPrFileExists)
         {
             I3_LOG(LOG_MASK_PARAMS, "Marking fresh PR file as valid");
             // Mark as valid
-            fs_seek(&pr_file, 0, FS_SEEK_SET);
+            fs_seek(&sPrFile, 0, FS_SEEK_SET);
             uint32_t hash = calculate_nvm_hash();
-            fs_write(&pr_file, &hash, sizeof(uint32_t));
+            fs_write(&sPrFile, &hash, sizeof(uint32_t));
         }
-        fs_close(&pr_file);
+        fs_close(&sPrFile);
     }
     else
     {
         // Depending on the source of this failure, this might not work, but it's important to ensure there's no corrupted file in the NVM
-        fs_close(&pr_file);
+        fs_close(&sPrFile);
         fs_unlink(PARAM_REPO_FILE);
         return -1;
     }
@@ -346,31 +346,31 @@ int app_handle_param_repo_write(cr_ParameterValue *data)
 
 #ifdef PARAM_REPO_USE_FILE_STORAGE
     // Only think about the NVM if file access hasn't failed
-    if (!pr_file_access_failed)
+    if (!sPrFileAccessFailed)
     {
         // Check if the parameter is in our list of NVM parameters, these need to be stored properly
-        for (int i = 0; i < nvm_param_count; i++)
+        for (int i = 0; i < sNvmParameterCount; i++)
         {
-            if (data->parameter_id == nvm_param_ids[i])
+            if (data->parameter_id == sNvmParameterIds[i])
             {
                 I3_LOG(LOG_MASK_PARAMS, "Handling NVM write for parameter %u, NVM index %d", data->parameter_id, i);
                 // Update entry
-                rval = fs_open(&pr_file, PARAM_REPO_FILE, FS_O_RDWR);
+                rval = fs_open(&sPrFile, PARAM_REPO_FILE, FS_O_RDWR);
                 if (rval < 0)
                 {
                     I3_LOG(LOG_MASK_ERROR, "Failed to open file to write parameter ID %u, error %d", data->parameter_id, rval);
-                    pr_file_access_failed = true;
+                    sPrFileAccessFailed = true;
                     // No need to close the file since it hasn't been opened
                     break;
                 }
-                rval = fs_seek(&pr_file, sizeof(uint32_t) + (i * sizeof(cr_ParameterValue)), FS_SEEK_SET);
+                rval = fs_seek(&sPrFile, sizeof(uint32_t) + (i * sizeof(cr_ParameterValue)), FS_SEEK_SET);
                 if (rval < 0)
                 {
                     I3_LOG(LOG_MASK_ERROR, "Failed to seek in file to write parameter ID %u, error %d", data->parameter_id, rval);
                 }
                 else
                 {
-                    rval = fs_write(&pr_file, data, sizeof(cr_ParameterValue));
+                    rval = fs_write(&sPrFile, data, sizeof(cr_ParameterValue));
                     if (rval < 0)
                     {
                         I3_LOG(LOG_MASK_ERROR, "Failed to write parameter ID %u, error %d", data->parameter_id, rval);
@@ -380,8 +380,8 @@ int app_handle_param_repo_write(cr_ParameterValue *data)
                         rval = 0;
                     }
                 }
-                if (!pr_file_access_failed)
-                    fs_close(&pr_file);
+                if (!sPrFileAccessFailed)
+                    fs_close(&sPrFile);
                 // Only one entry per parameter, no need to keep looking
                 if (rval)
                     rval = cr_ErrorCodes_WRITE_FAILED;

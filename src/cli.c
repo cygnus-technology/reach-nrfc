@@ -59,6 +59,10 @@
  *************************************     Defines     **************************************
  *******************************************************************************************/
 
+#ifndef CLI_MAX_LINE_LENGTH
+#define CLI_MAX_LINE_LENGTH 64
+#endif // CLI_MAX_LINE_LENGTH
+
 /* User code start [cli.c: User Defines] */
 #define CLI_TASK_STACK_SIZE 2048
 #define CLI_TASK_PRIORITY 5
@@ -98,14 +102,14 @@ static void lm(const char *input);
  ******************************     Local/Extern Variables     ******************************
  *******************************************************************************************/
 
-static char input[64];
-static uint8_t input_length = 0;
+static char sInput[CLI_MAX_LINE_LENGTH];
+static uint8_t sInputLength = 0;
 
 /* User code start [cli.c: User Local/Extern Variables] */
-K_THREAD_STACK_DEFINE(cli_task_stack_area, CLI_TASK_STACK_SIZE);
-struct k_thread cli_task_data;
-k_tid_t cli_task_id;
-static const struct device *uart_dev = DEVICE_DT_GET_ONE(zephyr_cdc_acm_uart);
+static K_THREAD_STACK_DEFINE(sCliTaskStackArea, CLI_TASK_STACK_SIZE);
+static struct k_thread sCliTaskData;
+k_tid_t sCliTaskId;
+static const struct device *sUartDevice = DEVICE_DT_GET_ONE(zephyr_cdc_acm_uart);
 /* User code end [cli.c: User Local/Extern Variables] */
 
 /********************************************************************************************
@@ -115,18 +119,15 @@ static const struct device *uart_dev = DEVICE_DT_GET_ONE(zephyr_cdc_acm_uart);
 void cli_init(void)
 {
     /* User code start [CLI: Init] */
-    cli_write("\033[2J\033[H");
-    print_versions();
-    cli_task_id = k_thread_create(
-        &cli_task_data, cli_task_stack_area,
-        K_THREAD_STACK_SIZEOF(cli_task_stack_area),
+    sCliTaskId = k_thread_create(
+        &sCliTaskData, sCliTaskStackArea,
+        K_THREAD_STACK_SIZEOF(sCliTaskStackArea),
         cli_task,
         NULL, NULL, NULL,
         CLI_TASK_PRIORITY,
         K_FP_REGS,
         K_NO_WAIT);
     /* User code end [CLI: Init] */
-    cli_write_prompt();
 }
 
 /**
@@ -135,45 +136,45 @@ void cli_init(void)
  */
 bool cli_poll(void)
 {
-    if (input_length == sizeof(input))
+    if (sInputLength == sizeof(sInput))
     {
         i3_log(LOG_MASK_WARN, "CLI input too long, clearing");
-        memset(input, 0, sizeof(input));
-        input_length = 0;
+        memset(sInput, 0, sizeof(sInput));
+        sInputLength = 0;
         cli_write_prompt();
     }
-    if (cli_read_char(&input[input_length]))
+    if (cli_read_char(&sInput[sInputLength]))
     {
-        switch (input[input_length])
+        switch (sInput[sInputLength])
         {
             case '\r':
                 cli_write("\r\n");
-                if (input_length == 0)
+                if (sInputLength == 0)
                 {
                     cli_write_prompt();
                     break; // No data, no need to call anything
                 }
-                input[input_length] = 0; // Null-terminate the string
-                crcb_cli_enter((const char*) input);
-                input_length = 0;
-                memset(input, 0, sizeof(input));
+                sInput[sInputLength] = 0; // Null-terminate the string
+                crcb_cli_enter((const char*) sInput);
+                sInputLength = 0;
+                memset(sInput, 0, sizeof(sInput));
                 cli_write_prompt();
                 break;
             case '\n':
                 break; // Ignore, only expect '\r' for command execution
             case '\b':
                 // Received a backspace
-                if (input_length > 0)
+                if (sInputLength > 0)
                 {
-                    input[--input_length] = 0;
+                    sInput[--sInputLength] = 0;
                     cli_write("\b \b");
                 }
                 break;
             default:
                 // Still waiting for an input
-                cli_write_char(input[input_length]);
-                if (input_length < sizeof(input))
-                    input_length++;
+                cli_write_char(sInput[sInputLength]);
+                if (sInputLength < sizeof(sInput))
+                    sInputLength++;
                 break;
         }
     return true;
@@ -255,7 +256,7 @@ static void cli_write(char *text)
      * This is called for outputs which are not necessary via BLE, such as clearing lines or handling backspaces */
     int i = 0;
     while (text[i] != 0)
-        uart_poll_out(uart_dev, text[i++]);
+        uart_poll_out(sUartDevice, text[i++]);
     /* User code end [CLI: Write] */
 }
 
@@ -263,7 +264,7 @@ static void cli_write_char(char c)
 {
     /* User code start [CLI: Write Char]
      * This is used to write single characters, which may be handled differently from longer strings. */
-    uart_poll_out(uart_dev, c);
+    uart_poll_out(sUartDevice, c);
     /* User code end [CLI: Write Char] */
 }
 
@@ -272,7 +273,7 @@ static bool cli_read_char(char *received)
     /* User code start [CLI: Read]
      * This is where other input sources (such as a UART) should be handled.
      * This should be non-blocking, and return true if a character was received, or false if not. */
-    return (uart_poll_in(uart_dev, (unsigned char *) received) == 0);
+    return (uart_poll_in(sUartDevice, (unsigned char *) received) == 0);
     /* User code end [CLI: Read] */
 }
 
@@ -280,6 +281,9 @@ static bool cli_read_char(char *received)
 
 static void cli_task(void *arg, void *param2, void *param3)
 {
+    cli_write("\033[2J\033[H");
+    print_versions();
+    cli_write_prompt();
     while (1)
     {
         cli_poll();
@@ -357,9 +361,6 @@ static void lm(const char *input)
         i3_log(LOG_MASK_ALWAYS, "    LOG_MASK_ACME               0x4000");
         i3_log(LOG_MASK_ALWAYS, "    LOG_MASK_DEBUG              0x8000");
         i3_log(LOG_MASK_ALWAYS, "    LOG_MASK_TIMEOUT           0x10000");
-        i3_log(LOG_MASK_ALWAYS, "    LOG_MASK_DATASTREAM_DEBUG 0x100000");
-        i3_log(LOG_MASK_ALWAYS, "    LOG_MASK_ZIGBEE_DEBUG     0x200000");
-        i3_log(LOG_MASK_ALWAYS, "    LOG_MASK_ZIGBEE_OTA_DEBUG 0x400000");
 #else
         // Logging is typically disabled to save space, so don't waste it with a bunch of printouts
         i3_log(LOG_MASK_WARN, "Log mask is of limited use, as logging is disabled");

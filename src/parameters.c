@@ -118,8 +118,8 @@ static int handle_write(const cr_ParameterValue *data);
  *******************************************************************************************/
 
 static int sCurrentParameter = 0;
-static cr_ParameterValue sCr_param_val[NUM_PARAMS];
-static const cr_ParameterInfo param_desc[] = {
+static cr_ParameterValue sParameterValues[NUM_PARAMS];
+static const cr_ParameterInfo sParameterDescriptions[] = {
     {
         .id = PARAM_USER_DEVICE_NAME,
         .name = "User Device Name",
@@ -240,7 +240,7 @@ static const cr_ParameterInfo param_desc[] = {
     }
 };
 
-static cr_ParameterNotifyConfig sParamNotifyInit[] = {
+static cr_ParameterNotifyConfig sParameterDefaultNotifications[] = {
     {
         .parameter_id = PARAM_TIMEZONE_ENABLED,
         .minimum_notification_period = 1000,
@@ -283,9 +283,9 @@ static cr_ParameterNotifyConfig sParamNotifyInit[] = {
     }
 };
 
-static int requested_pei_id = -1;
-static int current_pei_index = 0;
-static int current_pei_key_index = 0;
+static int sRequestedPeiId = -1;
+static int sCurrentPeiIndex = 0;
+static int sCurrentPeiKeyIndex = 0;
 static const cr_ParamExKey __cr_gen_pei_identify_led_labels[] = {
     {
         .id = 0,
@@ -347,7 +347,7 @@ static const cr_ParamExKey __cr_gen_pei_rgb_led_color_labels[] = {
     }
 };
 
-static const cr_gen_param_ex_t param_ex_desc[] = {
+static const cr_gen_param_ex_t sParameterLabelDescriptions[] = {
     {
         .pei_id = PARAM_EI_IDENTIFY_LED,
         .data_type = cr_ParameterDataType_BOOL,
@@ -369,12 +369,12 @@ static const cr_gen_param_ex_t param_ex_desc[] = {
 };
 
 /* User code start [parameters.c: User Local/Extern Variables] */
-static bool pr_file_access_failed = false;
-static bool pr_file_exists = false;
-static struct fs_file_t pr_file;
+static bool sPrFileAccessFailed = false;
+static bool sPrFileExists = false;
+static struct fs_file_t sPrFile;
 
-static uint32_t nvm_param_ids[NUM_PARAMS];
-static uint16_t nvm_param_count = 0;
+static uint32_t sNvmParameterIds[NUM_PARAMS];
+static uint16_t sNvmParameterCount = 0;
 /* User code end [parameters.c: User Local/Extern Variables] */
 
 /********************************************************************************************
@@ -387,18 +387,18 @@ void parameters_init(void)
      * Here is the place to do any initialization required before individual parameters are initialized */
     handle_pre_init();
     /* User code end [Parameter Repository: Pre-Init] */
-    memset(sCr_param_val, 0, sizeof(sCr_param_val));
+    memset(sParameterValues, 0, sizeof(sParameterValues));
     for (int i = 0; i < NUM_PARAMS; i++)
     {
-        sCr_param_val[i].parameter_id = param_desc[i].id;
+        sParameterValues[i].parameter_id = sParameterDescriptions[i].id;
         // Convert from description type identifier to value type identifier
-        sCr_param_val[i].which_value = (param_desc[i].which_desc - cr_ParameterInfo_uint32_desc_tag) + cr_ParameterValue_uint32_value_tag;
+        sParameterValues[i].which_value = (sParameterDescriptions[i].which_desc - cr_ParameterInfo_uint32_desc_tag) + cr_ParameterValue_uint32_value_tag;
 
-        parameters_reset_param(sCr_param_val[i].parameter_id, false, 0);
+        parameters_reset_param(sParameterValues[i].parameter_id, false, 0);
 
         /* User code start [Parameter Repository: Parameter Init]
          * Here is the place to do any initialization specific to a certain parameter */
-        handle_init(&sCr_param_val[i], &param_desc[i]);
+        handle_init(&sParameterValues[i], &sParameterDescriptions[i]);
         /* User code end [Parameter Repository: Parameter Init] */
 
     } // end for
@@ -417,63 +417,63 @@ int parameters_reset_param(param_t pid, bool write, uint32_t write_timestamp)
         return rval;
     
     cr_ParameterValue param = {
-        .parameter_id = sCr_param_val[idx].parameter_id,
-        .which_value = sCr_param_val[idx].which_value
+        .parameter_id = sParameterValues[idx].parameter_id,
+        .which_value = sParameterValues[idx].which_value
     };
     
     switch (param.which_value - cr_ParameterValue_uint32_value_tag)
     {
         case cr_ParameterDataType_UINT32:
-            if (param_desc[idx].desc.uint32_desc.has_default_value)
-                param.value.uint32_value = param_desc[idx].desc.uint32_desc.default_value;
+            if (sParameterDescriptions[idx].desc.uint32_desc.has_default_value)
+                param.value.uint32_value = sParameterDescriptions[idx].desc.uint32_desc.default_value;
             break;
         case cr_ParameterDataType_INT32:
-            if (param_desc[idx].desc.int32_desc.has_default_value)
-                param.value.int32_value = param_desc[idx].desc.int32_desc.default_value;
+            if (sParameterDescriptions[idx].desc.int32_desc.has_default_value)
+                param.value.int32_value = sParameterDescriptions[idx].desc.int32_desc.default_value;
             break;
         case cr_ParameterDataType_FLOAT32:
-            if (param_desc[idx].desc.float32_desc.has_default_value)
-                param.value.float32_value = param_desc[idx].desc.float32_desc.default_value;
+            if (sParameterDescriptions[idx].desc.float32_desc.has_default_value)
+                param.value.float32_value = sParameterDescriptions[idx].desc.float32_desc.default_value;
             break;
         case cr_ParameterDataType_UINT64:
-            if (param_desc[idx].desc.uint64_desc.has_default_value)
-                param.value.uint64_value = param_desc[idx].desc.uint64_desc.default_value;
+            if (sParameterDescriptions[idx].desc.uint64_desc.has_default_value)
+                param.value.uint64_value = sParameterDescriptions[idx].desc.uint64_desc.default_value;
             break;
         case cr_ParameterDataType_INT64:
-            if (param_desc[idx].desc.int64_desc.has_default_value)
-                param.value.int64_value = param_desc[idx].desc.int64_desc.default_value;
+            if (sParameterDescriptions[idx].desc.int64_desc.has_default_value)
+                param.value.int64_value = sParameterDescriptions[idx].desc.int64_desc.default_value;
             break;
         case cr_ParameterDataType_FLOAT64:
-            if (param_desc[idx].desc.float64_desc.has_default_value)
-                param.value.float64_value = param_desc[idx].desc.float64_desc.default_value;
+            if (sParameterDescriptions[idx].desc.float64_desc.has_default_value)
+                param.value.float64_value = sParameterDescriptions[idx].desc.float64_desc.default_value;
             break;
         case cr_ParameterDataType_BOOL:
-            if (param_desc[idx].desc.bool_desc.has_default_value)
-                param.value.bool_value = param_desc[idx].desc.bool_desc.default_value;
+            if (sParameterDescriptions[idx].desc.bool_desc.has_default_value)
+                param.value.bool_value = sParameterDescriptions[idx].desc.bool_desc.default_value;
             break;
         case cr_ParameterDataType_STRING:
-            if (param_desc[idx].desc.string_desc.has_default_value)
+            if (sParameterDescriptions[idx].desc.string_desc.has_default_value)
             {
-                memcpy(param.value.string_value, param_desc[idx].desc.string_desc.default_value, sizeof(param_desc[idx].desc.string_desc.default_value));
+                memcpy(param.value.string_value, sParameterDescriptions[idx].desc.string_desc.default_value, sizeof(sParameterDescriptions[idx].desc.string_desc.default_value));
             }
             break;
         case cr_ParameterDataType_ENUMERATION:
-            if (param_desc[idx].desc.enum_desc.has_default_value)
-                param.value.enum_value = param_desc[idx].desc.enum_desc.default_value;
+            if (sParameterDescriptions[idx].desc.enum_desc.has_default_value)
+                param.value.enum_value = sParameterDescriptions[idx].desc.enum_desc.default_value;
             break;
         case cr_ParameterDataType_BIT_FIELD:
-            if (param_desc[idx].desc.bitfield_desc.has_default_value)
-                param.value.bitfield_value = param_desc[idx].desc.bitfield_desc.default_value;
+            if (sParameterDescriptions[idx].desc.bitfield_desc.has_default_value)
+                param.value.bitfield_value = sParameterDescriptions[idx].desc.bitfield_desc.default_value;
             break;
         case cr_ParameterDataType_BYTE_ARRAY:
-            if (param_desc[idx].desc.bytearray_desc.has_default_value)
+            if (sParameterDescriptions[idx].desc.bytearray_desc.has_default_value)
             {
-                param.value.bytes_value.size = param_desc[idx].desc.bytearray_desc.default_value.size;
-                memcpy(param.value.bytes_value.bytes, param_desc[idx].desc.bytearray_desc.default_value.bytes, sizeof(param_desc[idx].desc.bytearray_desc.default_value.bytes));
+                param.value.bytes_value.size = sParameterDescriptions[idx].desc.bytearray_desc.default_value.size;
+                memcpy(param.value.bytes_value.bytes, sParameterDescriptions[idx].desc.bytearray_desc.default_value.bytes, sizeof(sParameterDescriptions[idx].desc.bytearray_desc.default_value.bytes));
             }
             else
             {
-                param.value.bytes_value.size = param_desc[idx].desc.bytearray_desc.max_size;
+                param.value.bytes_value.size = sParameterDescriptions[idx].desc.bytearray_desc.max_size;
             }
             break;
         default:
@@ -492,8 +492,8 @@ int parameters_reset_param(param_t pid, bool write, uint32_t write_timestamp)
     }
     else
     {
-        param.timestamp = sCr_param_val[idx].timestamp;
-        sCr_param_val[idx] = param;
+        param.timestamp = sParameterValues[idx].timestamp;
+        sParameterValues[idx] = param;
     }
     return rval;
 }
@@ -503,10 +503,10 @@ const char *parameters_get_ei_label(int32_t pei_id, uint32_t enum_bit_position)
     uint32_t index = 0;
     if (sFindIndexFromPeiId(pei_id, &index) != 0)
         return 0;
-    for (int i = 0; i < param_ex_desc[index].num_labels; i++)
+    for (int i = 0; i < sParameterLabelDescriptions[index].num_labels; i++)
     {
-        if (enum_bit_position == param_ex_desc[index].labels[i].id)
-            return param_ex_desc[index].labels[i].name;
+        if (enum_bit_position == sParameterLabelDescriptions[index].labels[i].id)
+            return sParameterLabelDescriptions[index].labels[i].name;
     }
     return 0;
 }
@@ -518,13 +518,13 @@ int parameters_reset_nvm(void)
     int rval = 0;
     for (uint16_t i = 0; i < NUM_PARAMS; i++)
     {
-        if (param_desc[i].storage_location != cr_StorageLocation_NONVOLATILE)
+        if (sParameterDescriptions[i].storage_location != cr_StorageLocation_NONVOLATILE)
             continue;
-        I3_LOG(LOG_MASK_PARAMS, "Resetting ID %u", sCr_param_val[i].parameter_id);
-        rval = parameters_reset_param(sCr_param_val[i].parameter_id, true, k_uptime_get_32());
+        I3_LOG(LOG_MASK_PARAMS, "Resetting ID %u", sParameterValues[i].parameter_id);
+        rval = parameters_reset_param(sParameterValues[i].parameter_id, true, k_uptime_get_32());
         if (rval)
         {
-            I3_LOG(LOG_MASK_ERROR, "Failed to reset parameter '%s', error %d", param_desc[i].name, rval);
+            I3_LOG(LOG_MASK_ERROR, "Failed to reset parameter '%s', error %d", sParameterDescriptions[i].name, rval);
         }
     }
     return rval;
@@ -565,7 +565,7 @@ int crcb_parameter_discover_next(cr_ParameterInfo *ppDesc)
         I3_LOG(LOG_MASK_PARAMS, "%s: sCurrentParameter (%d) >= NUM_PARAMS (%d)", __FUNCTION__, sCurrentParameter, NUM_PARAMS);
         return cr_ErrorCodes_NO_DATA;
     }
-    while (!crcb_access_granted(cr_ServiceIds_PARAMETER_REPO, param_desc[sCurrentParameter].id))
+    while (!crcb_access_granted(cr_ServiceIds_PARAMETER_REPO, sParameterDescriptions[sCurrentParameter].id))
     {
         I3_LOG(LOG_MASK_PARAMS, "%s: sCurrentParameter (%d) skip, access not granted", __FUNCTION__, sCurrentParameter);
         sCurrentParameter++;
@@ -575,7 +575,7 @@ int crcb_parameter_discover_next(cr_ParameterInfo *ppDesc)
             return cr_ErrorCodes_NO_DATA;
         }
     }
-    *ppDesc = param_desc[sCurrentParameter];
+    *ppDesc = sParameterDescriptions[sCurrentParameter];
     sCurrentParameter++;
     return 0;
 }
@@ -592,10 +592,10 @@ int crcb_parameter_read(const uint32_t pid, cr_ParameterValue *data)
 
     /* User code start [Parameter Repository: Parameter Read]
      * Here is the place to update the data from an external source, and update the return value if necessary */
-    handle_read(&sCr_param_val[idx]);
+    handle_read(&sParameterValues[idx]);
     /* User code end [Parameter Repository: Parameter Read] */
 
-    *data = sCr_param_val[idx];
+    *data = sParameterValues[idx];
     return rval;
 }
 
@@ -615,55 +615,55 @@ int crcb_parameter_write(const uint32_t pid, const cr_ParameterValue *data)
     handle_write(data);
     /* User code end [Parameter Repository: Parameter Write] */
 
-    sCr_param_val[idx].timestamp = data->timestamp;
-    sCr_param_val[idx].which_value = data->which_value;
+    sParameterValues[idx].timestamp = data->timestamp;
+    sParameterValues[idx].which_value = data->which_value;
 
     switch ((data->which_value - cr_ParameterValue_uint32_value_tag))
     {
     case cr_ParameterDataType_UINT32:
-        sCr_param_val[idx].value.uint32_value = data->value.uint32_value;
+        sParameterValues[idx].value.uint32_value = data->value.uint32_value;
         break;
     case cr_ParameterDataType_INT32:
-        sCr_param_val[idx].value.int32_value = data->value.int32_value;
+        sParameterValues[idx].value.int32_value = data->value.int32_value;
         break;
     case cr_ParameterDataType_FLOAT32:
-        sCr_param_val[idx].value.float32_value = data->value.float32_value;
+        sParameterValues[idx].value.float32_value = data->value.float32_value;
         break;
     case cr_ParameterDataType_UINT64:
-        sCr_param_val[idx].value.uint64_value = data->value.uint64_value;
+        sParameterValues[idx].value.uint64_value = data->value.uint64_value;
         break;
     case cr_ParameterDataType_INT64:
-        sCr_param_val[idx].value.int64_value = data->value.int64_value;
+        sParameterValues[idx].value.int64_value = data->value.int64_value;
         break;
     case cr_ParameterDataType_FLOAT64:
-        sCr_param_val[idx].value.float64_value = data->value.float64_value;
+        sParameterValues[idx].value.float64_value = data->value.float64_value;
         break;
     case cr_ParameterDataType_BOOL:
-        sCr_param_val[idx].value.bool_value = data->value.bool_value;
+        sParameterValues[idx].value.bool_value = data->value.bool_value;
         break;
     case cr_ParameterDataType_STRING:
-        memcpy(sCr_param_val[idx].value.string_value, data->value.string_value, REACH_PVAL_STRING_LEN);
-        sCr_param_val[idx].value.string_value[REACH_PVAL_STRING_LEN - 1] = 0;
-        I3_LOG(LOG_MASK_PARAMS, "String value: %s", sCr_param_val[idx].value.string_value);
+        memcpy(sParameterValues[idx].value.string_value, data->value.string_value, REACH_PVAL_STRING_LEN);
+        sParameterValues[idx].value.string_value[REACH_PVAL_STRING_LEN - 1] = 0;
+        I3_LOG(LOG_MASK_PARAMS, "String value: %s", sParameterValues[idx].value.string_value);
         break;
     case cr_ParameterDataType_BIT_FIELD:
-        sCr_param_val[idx].value.bitfield_value = data->value.bitfield_value;
+        sParameterValues[idx].value.bitfield_value = data->value.bitfield_value;
         break;
     case cr_ParameterDataType_ENUMERATION:
-        sCr_param_val[idx].value.enum_value = data->value.enum_value;
+        sParameterValues[idx].value.enum_value = data->value.enum_value;
         break;
     case cr_ParameterDataType_BYTE_ARRAY:
-        memcpy(sCr_param_val[idx].value.bytes_value.bytes, data->value.bytes_value.bytes, REACH_PVAL_BYTES_LEN);
+        memcpy(sParameterValues[idx].value.bytes_value.bytes, data->value.bytes_value.bytes, REACH_PVAL_BYTES_LEN);
         if (data->value.bytes_value.size > REACH_PVAL_BYTES_LEN)
         {
             LOG_ERROR("Parameter write of bytes has invalid size %d > %d", data->value.bytes_value.size, REACH_PVAL_BYTES_LEN);
-            sCr_param_val[idx].value.bytes_value.size = REACH_PVAL_BYTES_LEN;
+            sParameterValues[idx].value.bytes_value.size = REACH_PVAL_BYTES_LEN;
         }
         else
         {
-            sCr_param_val[idx].value.bytes_value.size = data->value.bytes_value.size;
+            sParameterValues[idx].value.bytes_value.size = data->value.bytes_value.size;
         }
-        LOG_DUMP_MASK(LOG_MASK_PARAMS, "bytes value", sCr_param_val[idx].value.bytes_value.bytes, sCr_param_val[idx].value.bytes_value.size);
+        LOG_DUMP_MASK(LOG_MASK_PARAMS, "bytes value", sParameterValues[idx].value.bytes_value.bytes, sParameterValues[idx].value.bytes_value.size);
         break;
     default:
         LOG_ERROR("Parameter write which_value %d not recognized.", data->which_value);
@@ -679,7 +679,7 @@ int crcb_parameter_get_count()
     int numAvailable = 0;
     for (i = 0; i < NUM_PARAMS; i++)
     {
-        if (crcb_access_granted(cr_ServiceIds_PARAMETER_REPO, param_desc[i].id))
+        if (crcb_access_granted(cr_ServiceIds_PARAMETER_REPO, sParameterDescriptions[i].id))
             numAvailable++;
     }
     return numAvailable;
@@ -688,10 +688,10 @@ int crcb_parameter_get_count()
 // return a number that changes if the parameter descriptions have changed.
 uint32_t crcb_compute_parameter_hash(void)
 {
-    // Note that the layout of the structure param_desc differs by compiler.
+    // Note that the layout of the structure sParameterDescriptions differs by compiler.
     // The hash computed on windows won't match that computed on SiLabs.
-    uint32_t *ptr = (uint32_t *)param_desc;
-    // LOG_DUMP_MASK(LOG_MASK_PARAMS, "Raw Params", cptr, sizeof(param_desc));
+    uint32_t *ptr = (uint32_t *)sParameterDescriptions;
+    // LOG_DUMP_MASK(LOG_MASK_PARAMS, "Raw Params", cptr, sizeof(sParameterDescriptions));
 
     // The hash should be different based on access permission
     uint32_t hash = 0;
@@ -707,12 +707,12 @@ uint32_t crcb_compute_parameter_hash(void)
 #ifdef NUM_EX_PARAMS
     for (int i = 0; i < NUM_EX_PARAMS; i++)
     {
-        hash ^= param_ex_desc[i].pei_id;
-        hash ^= (uint32_t)param_ex_desc[i].data_type;
-        hash ^= (uint32_t)param_ex_desc[i].num_labels;
-        for (int j = 0; j < param_ex_desc[i].num_labels; j++)
+        hash ^= sParameterLabelDescriptions[i].pei_id;
+        hash ^= (uint32_t)sParameterLabelDescriptions[i].data_type;
+        hash ^= (uint32_t)sParameterLabelDescriptions[i].num_labels;
+        for (int j = 0; j < sParameterLabelDescriptions[i].num_labels; j++)
         {
-            ptr = (uint32_t *)&param_ex_desc[i].labels[j];
+            ptr = (uint32_t *)&sParameterLabelDescriptions[i].labels[j];
             for (size_t k = 0; k < (sizeof(cr_ParamExKey) / sizeof(uint32_t)); k++)
                 hash ^= ptr[i];
         }
@@ -728,8 +728,8 @@ uint32_t crcb_compute_parameter_hash(void)
 
 int crcb_parameter_notification_init(const cr_ParameterNotifyConfig **pNoteArray, size_t *pNum)
 {
-    *pNum = NUM_INIT_PARAMETER_NOTIFICATIONS;
-    *pNoteArray = sParamNotifyInit;
+    *pNum = NUM_DEFAULT_PARAMETER_NOTIFICATIONS;
+    *pNoteArray = sParameterDefaultNotifications;
     return 0;
 }
 
@@ -739,36 +739,36 @@ int crcb_parameter_ex_get_count(const int32_t pid)
     {
         int rval = 0;
         for (int i = 0; i < NUM_EX_PARAMS; i++)
-            rval += PARAM_EI_TO_NUM_PEI_RESPONSES(param_ex_desc[i]);
+            rval += PARAM_EI_TO_NUM_PEI_RESPONSES(sParameterLabelDescriptions[i]);
         return rval;
     }
 
     for (int i=0; i<NUM_EX_PARAMS; i++)
     {
-        if (param_ex_desc[i].pei_id == (param_ei_t) pid)
-            return PARAM_EI_TO_NUM_PEI_RESPONSES(param_ex_desc[i]);
+        if (sParameterLabelDescriptions[i].pei_id == (param_ei_t) pid)
+            return PARAM_EI_TO_NUM_PEI_RESPONSES(sParameterLabelDescriptions[i]);
     }
     return 0;
 }
 
 int crcb_parameter_ex_discover_reset(const int32_t pid)
 {
-    requested_pei_id = pid;
+    sRequestedPeiId = pid;
     if (pid < 0)
-        current_pei_index = 0;
+        sCurrentPeiIndex = 0;
     else
     {
-        current_pei_index = -1;
+        sCurrentPeiIndex = -1;
         for (int i=0; i<NUM_EX_PARAMS; i++)
         {
-            if (param_ex_desc[i].pei_id == (param_ei_t) pid)
+            if (sParameterLabelDescriptions[i].pei_id == (param_ei_t) pid)
             {
-                current_pei_index = i;
+                sCurrentPeiIndex = i;
                 break;
             }
         }
     }
-    current_pei_key_index = 0;
+    sCurrentPeiKeyIndex = 0;
     return 0;
 }
 
@@ -776,35 +776,35 @@ int crcb_parameter_ex_discover_next(cr_ParamExInfoResponse *pDesc)
 {
     affirm(pDesc);
 
-    if (current_pei_index < 0)
+    if (sCurrentPeiIndex < 0)
     {
         I3_LOG(LOG_MASK_PARAMS, "%s: No more ex params.", __FUNCTION__);
         return cr_ErrorCodes_INVALID_ID;
     }
     else
     {
-        pDesc->pei_id = param_ex_desc[current_pei_index].pei_id;
-        pDesc->data_type = param_ex_desc[current_pei_index].data_type;
-        pDesc->keys_count = param_ex_desc[current_pei_index].num_labels - current_pei_key_index;
+        pDesc->pei_id = sParameterLabelDescriptions[sCurrentPeiIndex].pei_id;
+        pDesc->data_type = sParameterLabelDescriptions[sCurrentPeiIndex].data_type;
+        pDesc->keys_count = sParameterLabelDescriptions[sCurrentPeiIndex].num_labels - sCurrentPeiKeyIndex;
         if (pDesc->keys_count > 8)
             pDesc->keys_count = 8;
-        memcpy(&pDesc->keys, &param_ex_desc[current_pei_index].labels[current_pei_key_index], pDesc->keys_count * sizeof(cr_ParamExKey));
-        current_pei_key_index += pDesc->keys_count;
-        if (current_pei_key_index >= param_ex_desc[current_pei_index].num_labels)
+        memcpy(&pDesc->keys, &sParameterLabelDescriptions[sCurrentPeiIndex].labels[sCurrentPeiKeyIndex], pDesc->keys_count * sizeof(cr_ParamExKey));
+        sCurrentPeiKeyIndex += pDesc->keys_count;
+        if (sCurrentPeiKeyIndex >= sParameterLabelDescriptions[sCurrentPeiIndex].num_labels)
         {
-            if (requested_pei_id == -1)
+            if (sRequestedPeiId == -1)
             {
                 // Advance to the next pei_id index
-                current_pei_index++;
-                if (current_pei_index >= NUM_EX_PARAMS)
-                    current_pei_index = -1;
+                sCurrentPeiIndex++;
+                if (sCurrentPeiIndex >= NUM_EX_PARAMS)
+                    sCurrentPeiIndex = -1;
             }
             else
             {
                 // Out of data for the selected pei_id
-                current_pei_index = -1;
+                sCurrentPeiIndex = -1;
             }
-            current_pei_key_index = 0;
+            sCurrentPeiKeyIndex = 0;
         }
     }
     return 0;
@@ -822,7 +822,7 @@ static int sFindIndexFromPid(uint32_t pid, uint32_t *index)
     uint32_t idx;
     for (idx = 0; idx < NUM_PARAMS; idx++)
     {
-        if (param_desc[idx].id == pid)
+        if (sParameterDescriptions[idx].id == pid)
         {
             *index = idx;
             return 0;
@@ -835,7 +835,7 @@ static int sFindIndexFromPeiId(uint32_t pei_id, uint32_t *index)
 {
     uint32_t idx;
     for (idx=0; idx<NUM_EX_PARAMS; idx++) {
-        if (param_ex_desc[idx].pei_id == pei_id) {
+        if (sParameterLabelDescriptions[idx].pei_id == pei_id) {
             *index = idx;
             return 0;
         }
@@ -848,7 +848,7 @@ static int sFindIndexFromPeiId(uint32_t pei_id, uint32_t *index)
 static int handle_pre_init(void)
 {
     int rval = 0;
-    fs_file_t_init(&pr_file);
+    fs_file_t_init(&sPrFile);
     uint32_t hash = calculate_nvm_hash();
     uint32_t stored_hash = 0;
     if (fs_utils_file_exists(PARAM_REPO_FILE) == 1)
@@ -856,14 +856,14 @@ static int handle_pre_init(void)
         I3_LOG(LOG_MASK_PARAMS, "PR file found");
         // Verify that the file is valid and isn't for an earlier version of parameter repo
         // Theoretically should only cover parameters in the NVM, but this gets complicated with enum/bitfield descriptions tied to parameters
-        rval = fs_open(&pr_file, PARAM_REPO_FILE, FS_O_RDWR);
+        rval = fs_open(&sPrFile, PARAM_REPO_FILE, FS_O_RDWR);
         if (rval < 0)
         {
             I3_LOG(LOG_MASK_ERROR, "Failed to open PR file, error %d", rval);
-            pr_file_access_failed = true;
+            sPrFileAccessFailed = true;
             return -1;
         }
-        rval = (int) fs_read(&pr_file, &stored_hash, sizeof(stored_hash));
+        rval = (int) fs_read(&sPrFile, &stored_hash, sizeof(stored_hash));
         if (rval < sizeof(stored_hash) || stored_hash != hash)
         {
             if (rval < sizeof(stored_hash))
@@ -871,42 +871,42 @@ static int handle_pre_init(void)
             else
                 I3_LOG(LOG_MASK_WARN, "Stored hash 0x%x does not match computed hash 0x%x", stored_hash, hash);
             // Close and erase the file, and continue as if the file never existed
-            rval = fs_close(&pr_file);
+            rval = fs_close(&sPrFile);
             if (rval < 0)
             {
                 I3_LOG(LOG_MASK_ERROR, "Failed to close invalid PR file, error %d", rval);
-                pr_file_access_failed = true;
+                sPrFileAccessFailed = true;
                 return -2;
             }
             rval = fs_unlink(PARAM_REPO_FILE);
             if (rval < 0)
             {
                 I3_LOG(LOG_MASK_ERROR, "Failed to unlink invalid PR file, error %d", rval);
-                pr_file_access_failed = true;
+                sPrFileAccessFailed = true;
                 return -3;
             }
         }
         else
         {
-            pr_file_exists = true;
+            sPrFileExists = true;
         }
     }
-    if (!pr_file_exists)
+    if (!sPrFileExists)
     {
         I3_LOG(LOG_MASK_WARN, "No valid PR file found, creating a new one");
-        rval = fs_open(&pr_file, PARAM_REPO_FILE, FS_O_RDWR | FS_O_CREATE);
+        rval = fs_open(&sPrFile, PARAM_REPO_FILE, FS_O_RDWR | FS_O_CREATE);
         if (rval < 0)
         {
             I3_LOG(LOG_MASK_ERROR, "Failed to create PR file, error %d", rval);
-            pr_file_access_failed = true;
+            sPrFileAccessFailed = true;
             return -4;
         }
         stored_hash = ~hash;
-        rval = (int) fs_write(&pr_file, &stored_hash, sizeof(stored_hash));
+        rval = (int) fs_write(&sPrFile, &stored_hash, sizeof(stored_hash));
         if (rval < 0)
         {
             I3_LOG(LOG_MASK_ERROR, "Failed to write anti-hash to PR file, error %d", rval);
-            pr_file_access_failed = true;
+            sPrFileAccessFailed = true;
             return -5;
         }
     }
@@ -918,18 +918,18 @@ static int handle_init(cr_ParameterValue *data, const cr_ParameterInfo *desc)
     int rval = 0;
     if (desc->storage_location == cr_StorageLocation_NONVOLATILE)
     {
-        if (!pr_file_access_failed)
+        if (!sPrFileAccessFailed)
         {
-            if (pr_file_exists)
+            if (sPrFileExists)
             {
                 I3_LOG(LOG_MASK_PARAMS, "Getting data about parameter %u from existing PR file", data->parameter_id);
                 // Get the data from the file
                 cr_ParameterInfo temp;
-                rval = (int) fs_read(&pr_file, &temp, sizeof(cr_ParameterValue));
+                rval = (int) fs_read(&sPrFile, &temp, sizeof(cr_ParameterValue));
                 if (rval != sizeof(cr_ParameterValue))
                 {
                     I3_LOG(LOG_MASK_ERROR, "Failed to read parameter ID %u, error %d", data->parameter_id, rval);
-                    pr_file_access_failed = true;
+                    sPrFileAccessFailed = true;
                 }
                 else
                 {
@@ -938,18 +938,18 @@ static int handle_init(cr_ParameterValue *data, const cr_ParameterInfo *desc)
                 // If we got the data successfully, copy it to the parameter
                 memcpy(data, &temp, sizeof(temp));
                 // Update parameter map
-                nvm_param_ids[nvm_param_count++] = data->parameter_id;
+                sNvmParameterIds[sNvmParameterCount++] = data->parameter_id;
             }
             else
             {
                 I3_LOG(LOG_MASK_PARAMS, "Writing data about parameter %u to new PR file", data->parameter_id);
-                nvm_param_ids[nvm_param_count++] = data->parameter_id;
+                sNvmParameterIds[sNvmParameterCount++] = data->parameter_id;
                 // Write the data to the file
-                rval = (int) fs_write(&pr_file, data, sizeof(cr_ParameterValue));
+                rval = (int) fs_write(&sPrFile, data, sizeof(cr_ParameterValue));
                 if (rval != sizeof(cr_ParameterValue))
                 {
                     I3_LOG(LOG_MASK_ERROR, "Failed to write parameter ID %u, error %d", data->parameter_id, rval);
-                    pr_file_access_failed = true;
+                    sPrFileAccessFailed = true;
                 }
                 else
                 {
@@ -967,8 +967,8 @@ static int handle_init(cr_ParameterValue *data, const cr_ParameterInfo *desc)
             break;
         case PARAM_USER_DEVICE_NAME:
             // Advertise the user device name if it's been set
-	        if (sCr_param_val[PARAM_USER_DEVICE_NAME].value.string_value[0] != 0)
-		        rnrfc_set_advertised_name(sCr_param_val[PARAM_USER_DEVICE_NAME].value.string_value);
+	        if (sParameterValues[PARAM_USER_DEVICE_NAME].value.string_value[0] != 0)
+		        rnrfc_set_advertised_name(sParameterValues[PARAM_USER_DEVICE_NAME].value.string_value);
             break;
         default:
             // Call the standard read function
@@ -980,22 +980,22 @@ static int handle_init(cr_ParameterValue *data, const cr_ParameterInfo *desc)
 
 static int handle_post_init(void)
 {
-    if (!pr_file_access_failed)
+    if (!sPrFileAccessFailed)
     {
-        if (!pr_file_exists)
+        if (!sPrFileExists)
         {
             I3_LOG(LOG_MASK_PARAMS, "Marking fresh PR file as valid");
             // Mark as valid
-            fs_seek(&pr_file, 0, FS_SEEK_SET);
+            fs_seek(&sPrFile, 0, FS_SEEK_SET);
             uint32_t hash = calculate_nvm_hash();
-            fs_write(&pr_file, &hash, sizeof(uint32_t));
+            fs_write(&sPrFile, &hash, sizeof(uint32_t));
         }
-        fs_close(&pr_file);
+        fs_close(&sPrFile);
     }
     else
     {
         // Depending on the source of this failure, this might not work, but it's important to ensure there's no corrupted file in the NVM
-        fs_close(&pr_file);
+        fs_close(&sPrFile);
         fs_unlink(PARAM_REPO_FILE);
         return -1;
     }
@@ -1059,31 +1059,31 @@ static int handle_write(const cr_ParameterValue *data)
     }
 
     // Only think about the NVM if file access hasn't failed
-    if (!pr_file_access_failed)
+    if (!sPrFileAccessFailed)
     {
         // Check if the parameter is in our list of NVM parameters, these need to be stored properly
-        for (int i = 0; i < nvm_param_count; i++)
+        for (int i = 0; i < sNvmParameterCount; i++)
         {
-            if (data->parameter_id == nvm_param_ids[i])
+            if (data->parameter_id == sNvmParameterIds[i])
             {
                 I3_LOG(LOG_MASK_PARAMS, "Handling NVM write for parameter %u, NVM index %d", data->parameter_id, i);
                 // Update entry
-                rval = fs_open(&pr_file, PARAM_REPO_FILE, FS_O_RDWR);
+                rval = fs_open(&sPrFile, PARAM_REPO_FILE, FS_O_RDWR);
                 if (rval < 0)
                 {
                     I3_LOG(LOG_MASK_ERROR, "Failed to open file to write parameter ID %u, error %d", data->parameter_id, rval);
-                    pr_file_access_failed = true;
+                    sPrFileAccessFailed = true;
                     // No need to close the file since it hasn't been opened
                     break;
                 }
-                rval = fs_seek(&pr_file, sizeof(uint32_t) + (i * sizeof(cr_ParameterValue)), FS_SEEK_SET);
+                rval = fs_seek(&sPrFile, sizeof(uint32_t) + (i * sizeof(cr_ParameterValue)), FS_SEEK_SET);
                 if (rval < 0)
                 {
                     I3_LOG(LOG_MASK_ERROR, "Failed to seek in file to write parameter ID %u, error %d", data->parameter_id, rval);
                 }
                 else
                 {
-                    rval = fs_write(&pr_file, data, sizeof(cr_ParameterValue));
+                    rval = fs_write(&sPrFile, data, sizeof(cr_ParameterValue));
                     if (rval < 0)
                     {
                         I3_LOG(LOG_MASK_ERROR, "Failed to write parameter ID %u, error %d", data->parameter_id, rval);
@@ -1093,8 +1093,8 @@ static int handle_write(const cr_ParameterValue *data)
                         rval = 0;
                     }
                 }
-                if (!pr_file_access_failed)
-                    fs_close(&pr_file);
+                if (!sPrFileAccessFailed)
+                    fs_close(&sPrFile);
                 // Only one entry per parameter, no need to keep looking
                 if (rval)
                     rval = cr_ErrorCodes_WRITE_FAILED;
@@ -1136,9 +1136,9 @@ static uint32_t calculate_nvm_hash(void)
     bool first_param_found = false;
     for (int i = 0; i < NUM_PARAMS; i++)
     {
-        if (param_desc[i].storage_location != cr_StorageLocation_NONVOLATILE)
+        if (sParameterDescriptions[i].storage_location != cr_StorageLocation_NONVOLATILE)
             continue;
-        uint32_t *ptr = (uint32_t*) &param_desc[i];
+        uint32_t *ptr = (uint32_t*) &sParameterDescriptions[i];
         if (!first_param_found)
         {
             hash = ptr[0];

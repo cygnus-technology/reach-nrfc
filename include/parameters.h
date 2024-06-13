@@ -48,7 +48,7 @@
 
 // Defines
 #define NUM_PARAMS 11
-#define NUM_INIT_PARAMETER_NOTIFICATIONS 8
+#define NUM_DEFAULT_PARAMETER_NOTIFICATIONS 8
 #define NUM_EX_PARAMS 3
 
 /* User code start [parameters.h: User Defines] */

@@ -62,13 +62,12 @@ typedef enum {
 /* User code end [files.h: User Data Types] */
 
 // Global Variables
-extern cr_FileInfo file_descriptions[3];
-
 /* User code start [files.h: User Global Variables] */
 /* User code end [files.h: User Global Variables] */
 
 // Global Functions
 void files_init(void);
+int files_set_description(uint32_t fid, cr_FileInfo *file_desc);
 
 /* User code start [files.h: User Global Functions] */
 void files_reset(void);

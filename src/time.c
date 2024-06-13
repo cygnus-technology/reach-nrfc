@@ -95,12 +95,13 @@
 
 int crcb_time_get(cr_TimeGetResponse *response)
 {
+    int rval = 0;
     /* User code start [Time: Get] */
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
     response->seconds_utc = (int64_t) now.tv_sec;
     cr_ParameterValue data;
-    int rval = crcb_parameter_read(PARAM_TIMEZONE_ENABLED, &data);
+    rval = crcb_parameter_read(PARAM_TIMEZONE_ENABLED, &data);
     if (rval)
         return cr_ErrorCodes_READ_FAILED;
     response->has_timezone = data.value.bool_value;
@@ -116,11 +117,12 @@ int crcb_time_get(cr_TimeGetResponse *response)
         response->timezone = data.value.int32_value;
     }
     /* User code end [Time: Get] */
-    return 0;
+    return rval;
 }
 
 int crcb_time_set(const cr_TimeSetRequest *request)
 {
+    int rval = 0;
     /* User code start [Time: Set] */
     struct timespec time = {.tv_sec = (time_t) request->seconds_utc};
     clock_settime(CLOCK_REALTIME, &time);
@@ -134,7 +136,7 @@ int crcb_time_set(const cr_TimeSetRequest *request)
         crcb_parameter_write(PARAM_TIMEZONE_OFFSET, &param);
     }
     /* User code end [Time: Set] */
-    return 0;
+    return rval;
 }
 
 /* User code start [time.c: User Cygnus Reach Callback Functions] */
