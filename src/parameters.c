@@ -699,6 +699,7 @@ uint32_t crcb_compute_parameter_hash(void)
     {
         if (crcb_access_granted(cr_ServiceIds_PARAMETER_REPO, jj))
         {
+            ptr = (uint32_t *)&sParameterDescriptions[jj];
             for (size_t i = 0; i < (sizeof(cr_ParameterInfo) / sizeof(uint32_t)); i++)
                 hash ^= ptr[i];
         }

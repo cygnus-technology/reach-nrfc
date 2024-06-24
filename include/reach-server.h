@@ -54,13 +54,6 @@
 
 #define APP_ADVERTISED_NAME_LENGTH 30
 
-// Define this to enable remote CLI via a buffer.
-#define ENABLE_REMOTE_CLI
-#ifdef ENABLE_REMOTE_CLI
-  // If false use a command to enable it.
-  #define REMOTE_CLI_ECHO_ON_DEFAULT    true
-#endif
-
 // Use this to set the default logging level.  0x0 will only report high-priority text and warnings/errors
 #define DEFAULT_LOG_MASK 0x0
 

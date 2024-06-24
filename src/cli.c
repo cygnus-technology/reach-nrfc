@@ -323,14 +323,6 @@ static void slash(void)
 
     // Reach information
     i3_log(LOG_MASK_ALWAYS, "Current log mask: 0x%x", i3_log_get_mask());
-  #ifdef ENABLE_REMOTE_CLI
-    if (i3_log_get_remote_cli_enable())
-        i3_log(LOG_MASK_ALWAYS, "Remote CLI support enabled.");
-    else
-        i3_log(LOG_MASK_ALWAYS, "Remote CLI support built but not enabled.");
-  #else
-    i3_log(LOG_MASK_ALWAYS, "!!! Remote CLI NOT support built in.");
-  #endif
 }
 
 static void lm(const char *input)
